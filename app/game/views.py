@@ -1,5 +1,8 @@
 from aiohttp.web_exceptions import HTTPConflict, HTTPNotFound, HTTPBadRequest
 from aiohttp_apispec import request_schema, response_schema, querystring_schema
+
+from app.game import MAX_ROUNDS
+
 '''
 from app.game.models import Answer
 from app.game.schemes import (
