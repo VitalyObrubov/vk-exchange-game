@@ -1,0 +1,17 @@
+
+session:
+  key: u7pUYa_wj8ITfBmuo1Fwu_omiQHMsl8URQ6U750gjWE=
+admin:
+  email: admin@admin.com
+  password: admin
+database:
+  host: 0.0.0.0
+  port: 5432
+  user: postgres
+  password: postgres
+  database: exchange
+bot:
+  token: e66acb5215d5193d4a18b5840a4ad8ed1e00f0508e921997c9a73029b25912ec9728875922fc8f26fd2e8
+  group_id: 210525858
+
+
