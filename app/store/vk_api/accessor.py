@@ -85,6 +85,9 @@ class VkApiAccessor(BaseAccessor):
             raw_updates = data.get("updates", [])
             updates = []
             for update in raw_updates:
+                action = update["object"]["message"].get("action")#в сообщении о добавлении в беседу есть это поле
+                if action:
+                    action = action["type"]
                 updates.append(
                     Update(
                         type=update["type"],
@@ -92,7 +95,8 @@ class VkApiAccessor(BaseAccessor):
                             id=update["object"]["message"]["id"],
                             user_id=update["object"]["message"]["from_id"],
                             peer_id=update["object"]["message"]["peer_id"],
-                            body=update["object"]["message"]["text"],
+                            text=update["object"]["message"]["text"],
+                            action=action,
                             
                         ),
                     )

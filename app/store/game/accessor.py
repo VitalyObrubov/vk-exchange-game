@@ -1,18 +1,29 @@
 from typing import Optional, List
 from app.store.database.gino import db
 from app.base.base_accessor import BaseAccessor
-'''
+
 from app.game.models import (
-    Theme,
-    Question,
-    Answer,
-    ThemeModel,
-    QuestionModel,
-    AnswerModel,
+    Security,
+    User,
+    Security,
+    Game,
+    UserModel,
+    SecuritesModel,
+    GameModel,
+    GameUsersModel,
+    BuyedSecuritesModel,
+    TradeRoundsModel,
+    MarketEventsModel,
+    TradedSecuritesModel,
+    TradeJornalModel,
 )
 from asyncpg.exceptions import NotNullViolationError
 
+class GameAccessor(BaseAccessor):
+    async def start_game(self, chat_id: int):
+        return "Game started"
 
+'''
 class QuizAccessor(BaseAccessor):
     async def create_theme(self, title: str) -> Theme:
         #theme = await self.get_theme_by_title(title)
