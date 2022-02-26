@@ -12,7 +12,8 @@ from alembic import context
 # access to the values within the .ini file in use.
 
 
-with open('/home/vitaly/vk-exchange-game/config.yml') as fh:
+with open('config.yml') as fh:
+#with open('/home/vitaly/vk-exchange-game/config.yml') as fh:
 #with open(os.environ.get('CONFIGPATH')) as fh:
     cfg = yaml.safe_load(fh)
     app_config = Config(**cfg).database

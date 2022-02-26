@@ -121,3 +121,20 @@ class VkApiAccessor(BaseAccessor):
         ) as resp:
             data = await resp.json()
             self.logger.info(data)
+
+    async def get_users(self, chat_id):
+        async with self.session.post(
+            self._build_query(
+                host=API_PATH,
+                method="messages.getConversationMembers",
+                params={
+                    "peer_id": chat_id,
+                    "fields":"first_name, last_name, nickname",
+                    "access_token": self.app.config.bot.token,
+                },
+            )
+        ) as resp:
+            data = (await resp.json())["response"]
+            self.logger.info(data)
+            return data["profiles"]
+           

@@ -16,9 +16,11 @@ class BotManager:
         for update in updates:
             if update.object.action == "chat_invite_user":
                 message_text = "Привет! Для запуска игры введите /start_game"
-            elif update.object.text == "/start_game":
+
+            elif update.object.text.find("/start_game") >-1:
                 chat_id=int(update.object.peer_id)
                 message_text = await self.app.store.games.start_game(chat_id)
+
             else:
                 message_text = "Команда не опознана"
 
