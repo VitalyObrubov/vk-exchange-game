@@ -1,13 +1,14 @@
 import random
 import typing
-from typing import Optional
+from typing import Optional, List
 
 from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
-
+from datetime import datetime
 from app.base.base_accessor import BaseAccessor
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
 from app.store.vk_api.poller import Poller
+from app.game.models import User
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -122,19 +123,30 @@ class VkApiAccessor(BaseAccessor):
             data = await resp.json()
             self.logger.info(data)
 
-    async def get_users(self, chat_id):
+    # запрашивает с сервера вк данные пользователей чата и формирует список объектов User
+    # не понимаю зачем здесь проверять правильность ответа все ошибки ловятся при отладке
+    # и могут возникнуть только если изменится протокол вк, а значит придется переписывть код
+    async def get_users(self, chat_id) -> List[User]:
         async with self.session.post(
             self._build_query(
                 host=API_PATH,
                 method="messages.getConversationMembers",
                 params={
                     "peer_id": chat_id,
-                    "fields":"first_name, last_name, nickname",
+                    "fields":"first_name, last_name",
                     "access_token": self.app.config.bot.token,
                 },
             )
         ) as resp:
             data = (await resp.json())["response"]
             self.logger.info(data)
-            return data["profiles"]
+            users = []
+            for raw_user in data["profiles"]:
+                user = User(vk_id=raw_user["id"], 
+                            name=f'{raw_user["first_name"]} {raw_user["last_name"]}', 
+                            create_at=datetime.now(),
+                            points = 10000,
+                            buyed_securites=[])
+                users.append(user)
+            return users
            

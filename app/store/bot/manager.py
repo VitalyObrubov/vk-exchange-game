@@ -1,6 +1,6 @@
 import typing
 from logging import getLogger
-
+from app.game.messages import (IINVITE_MEESGE,UNKNOWN_COMMAND)
 from app.store.vk_api.dataclasses import Update, Message
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -15,14 +15,14 @@ class BotManager:
     async def handle_updates(self, updates: list[Update]):
         for update in updates:
             if update.object.action == "chat_invite_user":
-                message_text = "Привет! Для запуска игры введите /start_game"
+                message_text = IINVITE_MEESGE
 
-            elif update.object.text.find("/start_game") >-1:
+            elif update.object.text.startswith("/start_game"):
                 chat_id=int(update.object.peer_id)
                 message_text = await self.app.store.games.start_game(chat_id)
 
             else:
-                message_text = "Команда не опознана"
+                message_text = UNKNOWN_COMMAND
 
             await self.app.store.vk_api.send_message(
                 Message(

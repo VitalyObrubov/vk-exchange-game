@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from re import A
-import string
 from typing import Optional, List, Dict
 from datetime  import datetime
 from app.store.database.gino import db
@@ -23,7 +22,7 @@ class User:
     name: str
     create_at: datetime
     points: int #кошелек
-    buyed_securites: list[BuyedSecurity] #= field(default_factory=list)  
+    buyed_securites: list[BuyedSecurity]
 
  
 @dataclass
@@ -33,9 +32,8 @@ class Game:
     chat_id: int
     state: str #started|finished
     trade_round: int
-    #trade_jornal: List[dict] = field(default_factory=list) #{user, operation,security,ammount} торгуемые акции
-    users: list[User] #= field(default_factory=list)
-    traded_sequrites: list[Security] #= field(default_factory=list) 
+    users: list[User] 
+    traded_sequrites: list[Security]
 
 
 class UserModel(db.Model):
