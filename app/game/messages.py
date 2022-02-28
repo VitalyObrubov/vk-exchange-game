@@ -8,7 +8,7 @@ START_GAME_MESSAGE = """Игра начата!<br>
                        У каждого на счету 10000 монет<br>
                        Продаются следующие акции<br>      
                     """
-
+BAD_USER_REQUEST = "Запрос пользователей не удался. Ошибка программы"
 
 def get_text_list_traded_sequrites(game: Game) -> str:
    text = ""

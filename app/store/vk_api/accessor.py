@@ -138,13 +138,22 @@ class VkApiAccessor(BaseAccessor):
                 },
             )
         ) as resp:
-            data = (await resp.json())["response"]
-            self.logger.info(data)
             users = []
-            for raw_user in data["profiles"]:
+            if resp.status != 200:
+                self.logger.error(f"Запрос списка пользователей не удался resp.status = {resp.status}")
+                return users
+            resp_json = (await resp.json())
+            try:
+                profiles = resp_json["response"]["profiles"]
+            except :
+                self.logger.error(f"Запрос списка пользователей: неверная структура ответа")
+                return users
+
+            self.logger.info(profiles)
+            for raw_user in profiles:
                 user = User(vk_id=raw_user["id"], 
                             name=f'{raw_user["first_name"]} {raw_user["last_name"]}', 
-                            create_at=datetime.now(),
+                            create_at=datetime.utcnow(),
                             points = 10000,
                             buyed_securites=[])
                 users.append(user)

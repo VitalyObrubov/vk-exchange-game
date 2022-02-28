@@ -1,11 +1,14 @@
 import random
 import typing
+from app.base.decorators import errors_catching, errors_catching_asinc
 from typing import Optional, List
 from app.store.database.gino import db
 from app.base.base_accessor import BaseAccessor
 from datetime import datetime
-from app.game.messages import (START_GAME_MESSAGE,)
+from sqlalchemy.dialects.postgresql import insert
+from app.game.messages import (START_GAME_MESSAGE,BAD_USER_REQUEST)
 from app.game.messages import get_text_list_traded_sequrites
+from logging import getLogger
 if typing.TYPE_CHECKING:
     from app.web.app import Application
 
@@ -28,16 +31,8 @@ from app.game.models import (
 class GameAccessor(BaseAccessor):
     def __init__(self, app: "Application"):
         self.app = app
-    '''
-    def create_game_users(self, game: Game, raw_users):
-        for raw_user in raw_users:
-            user = User(vk_id=raw_user["id"], 
-                        name=f'{raw_user["first_name"]} {raw_user["last_name"]}', 
-                        create_at=datetime.now(),
-                        points = 10000,
-                        buyed_securites=[])
-            game.users.append(user)
-'''
+        self.logger = getLogger("accessor")
+
     async def create_traded_sequrites(self, game: Game):
         res = await SecuritesModel.query.gino.all()
         for row in res:
@@ -59,11 +54,17 @@ class GameAccessor(BaseAccessor):
         db_trade_round = await TradeRoundsModel.create(number_in_game=game.trade_round, state="started", game_id=game.id)
         market_events = await MarketEventsModel.query.gino.all()
         events_count = len(market_events)
+        traded_securites = [] #сбор данных для загрузки в базу
         for sequrity in game.traded_sequrites:
             random_event = market_events[random.randint(0, events_count-1)]
             sequrity.price += sequrity.price / 100 * random_event.diff
             sequrity.market_event = f"{random_event.description} цена акции изменилась на {random_event.diff}%"
-            await TradedSecuritesModel.create(sequrity_id = sequrity.id, price=sequrity.price, round_id=db_trade_round.id, market_event_id=random_event.id)
+            traded_securites.append({"sequrity_id":sequrity.id, "price":sequrity.price, "round_id":db_trade_round.id, "market_event_id":random_event.id})
+            
+        stmt = insert(TradedSecuritesModel).values(traded_securites)
+        stmt = stmt.on_conflict_do_nothing()
+        await stmt.gino.model(TradedSecuritesModel).all()
+
 
 
     async def create_game_in_db(self, game: Game):
@@ -77,20 +78,30 @@ class GameAccessor(BaseAccessor):
             async with db.transaction():           
                 db_game = await GameModel.create(create_at=game.create_at, chat_id=game.chat_id, state=game.state)
                 game.id = db_game.id
+                game_users = [] # подготовка данных для загрузки в базу
+                all_users = []
                 for user in game.users:
-                    db_user =  await UserModel.query.where(UserModel.vk_id==user.vk_id).gino.first()
-                    if db_user == None:
-                        db_user =  await UserModel.create(vk_id=user.vk_id, name = user.name, create_at=user.create_at)
-                    await GameUsersModel.create(game_id=game.id, user_id=user.vk_id, points=user.points)
+                    all_users.append({"vk_id":user.vk_id, "name":user.name, "create_at":user.create_at})
+                    game_users.append({"game_id":game.id, "user_id":user.vk_id, "points":user.points})
+                
+                stmt = insert(UserModel).values(all_users)
+                stmt = stmt.on_conflict_do_nothing()
+                await stmt.gino.model(UserModel).all()
+                stmt = insert(GameUsersModel).values(game_users)
+                stmt = stmt.on_conflict_do_nothing()
+                await stmt.gino.model(GameUsersModel).all()
                 await self.create_next_trade_round(game)
                 
         except Exception as e:
             self.logger.info(e)
 
+    @errors_catching_asinc
     async def start_game(self, chat_id: int):
         users = await self.app.store.vk_api.get_users(chat_id)
+        if len(users) == 0:
+            return BAD_USER_REQUEST
         game = Game(id=0, 
-                    create_at=datetime.now(),
+                    create_at=datetime.utcnow(),
                     chat_id=chat_id,
                     state="started",
                     trade_round=0,

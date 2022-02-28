@@ -92,7 +92,7 @@ class TradeJornalModel(db.Model):
     __tablename__ = "trade_jornal"
     id = db.Column(db.Integer(), primary_key=True)
     round_id = db.Column(db.Integer(),db.ForeignKey("trade_rounds.id", ondelete='CASCADE'),nullable=False)
-    user_id = db.Column(db.Integer(),db.ForeignKey("users.vk_id", ondelete='CASCADE'),nullable=False)
+    user_id = db.Column(db.Integer(),db.ForeignKey("users.vk_id"),nullable=False)
     sequrity_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False)
     operation = db.Column(db.String(30),nullable = False)
     ammount = db.Column(db.Integer()) 
