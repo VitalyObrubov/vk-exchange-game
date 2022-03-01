@@ -13,6 +13,7 @@ class Security:
 
 @dataclass
 class BuyedSecurity:
+    id: int
     security: Security
     ammount: int
 
@@ -35,6 +36,7 @@ class Game:
     users: list[User] 
     traded_sequrites: list[Security]
 
+#===================================================================================================================================
 
 class UserModel(db.Model):
     __tablename__ = "users"
@@ -54,6 +56,23 @@ class GameModel(db.Model):
     create_at = db.Column(db.DateTime(timezone=True), nullable=False)
     chat_id = db.Column(db.Integer(), nullable=False)
     state = db.Column(db.String(30), nullable = False)
+    
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._id_list = []
+        self._users = []
+  
+    @property
+    def users(self):
+        return self._users
+
+    @users.setter
+    def users(self,val):
+        if val is not None:
+            if val.id in self._id_list:
+                return
+            self._users.append(val)
+            self._id_list.append(val.id)
 
 class GameUsersModel(db.Model):
     __tablename__ = "game_users"
@@ -62,11 +81,46 @@ class GameUsersModel(db.Model):
     user_id = db.Column(db.Integer(),db.ForeignKey("users.vk_id"),nullable=False)
     points = db.Column(db.Integer(),nullable=False)
 
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._vk_user: UserModel
+        self._buyed_securites = []
+
+    @property
+    def vk_user(self) -> "UserModel":
+        return self._vk_user
+
+    @vk_user.setter
+    def vk_user(self,val: "UserModel"):
+        self._vk_user=val
+
+    @property
+    def buyed_securites(self):
+        return self._buyed_securites
+
+    @buyed_securites.setter
+    def buyed_securites(self,val):
+        if val is not None:
+            self._buyed_securites.append(val)
+
 class BuyedSecuritesModel(db.Model):
     __tablename__ = "buyed_securites"
+    id = db.Column(db.Integer(), primary_key=True)
     user_in_game_id = db.Column(db.Integer(),db.ForeignKey("game_users.id", ondelete='CASCADE'),nullable=False)
     security_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False) 
     ammount = db.Column(db.Integer(),nullable=False) 
+    
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._sequrity: SecuritesModel
+        
+    @property
+    def sequrity(self) -> "SecuritesModel":
+        return self._sequrity
+
+    @sequrity.setter
+    def sequrity(self,val: "SecuritesModel"):
+        self._sequrity=val
 
 class TradeRoundsModel(db.Model):
     __tablename__ = "trade_rounds"
@@ -74,6 +128,19 @@ class TradeRoundsModel(db.Model):
     number_in_game = db.Column(db.Integer(),nullable = False)
     state = db.Column(db.String(30),nullable = False)
     game_id = db.Column(db.Integer(),db.ForeignKey("games.id", ondelete='CASCADE'),nullable=False)
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._traded_securites = []
+
+    @property
+    def traded_securites(self):
+        return self._traded_securites
+
+    @traded_securites.setter
+    def traded_securites(self,val):
+        if val is not None:
+            self._traded_securites.append(val)
 
 class MarketEventsModel(db.Model):
     __tablename__ = "market_events"
@@ -87,6 +154,27 @@ class TradedSecuritesModel(db.Model):
     price = db.Column(db.Integer()) 
     round_id = db.Column(db.Integer(),db.ForeignKey("trade_rounds.id", ondelete='CASCADE'),nullable=False)
     market_event_id = db.Column(db.Integer(),db.ForeignKey("market_events.id", ondelete='CASCADE'),nullable=False)
+    
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._security: SecuritesModel
+        self._market_event: MarketEventsModel
+      
+    @property
+    def market_event(self) -> "MarketEventsModel":
+        return self._market_event
+
+    @market_event.setter
+    def market_event(self,val: "MarketEventsModel"):
+        self._market_event=val
+
+    @property
+    def security(self) -> "SecuritesModel":
+        return self._security
+
+    @security.setter
+    def security(self,val: "SecuritesModel"):
+        self._security=val
 
 class TradeJornalModel(db.Model):
     __tablename__ = "trade_jornal"

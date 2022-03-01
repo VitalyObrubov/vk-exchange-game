@@ -1,8 +1,8 @@
 """next migration
 
-Revision ID: 48ad439eda3a
+Revision ID: 05a9326ce4ea
 Revises: 
-Create Date: 2022-02-26 18:59:57.320713
+Create Date: 2022-02-28 14:06:49.914791
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from sqlalchemy.sql import table, column
 from sqlalchemy import String, Integer, Date, Unicode
 
 # revision identifiers, used by Alembic.
-revision = '48ad439eda3a'
+revision = '05a9326ce4ea'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -62,11 +62,13 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('buyed_securites',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_in_game_id', sa.Integer(), nullable=False),
     sa.Column('security_id', sa.String(length=10), nullable=False),
     sa.Column('ammount', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['security_id'], ['securites.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_in_game_id'], ['game_users.id'], ondelete='CASCADE')
+    sa.ForeignKeyConstraint(['user_in_game_id'], ['game_users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('trade_jornal',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -77,7 +79,7 @@ def upgrade():
     sa.Column('ammount', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['round_id'], ['trade_rounds.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['sequrity_id'], ['securites.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.vk_id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.vk_id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('traded_securites',
@@ -114,13 +116,6 @@ def upgrade():
             {'id':'AFLT', 'description':'Аэрофлот','start_price':200},
             {'id':'AKRN', 'description':'Акрон','start_price':500},
             {'id':'AMEZ', 'description':'Ашинский металлургический завод','start_price':1000},
-            {'id':'AQUA', 'description':'Русская Аквакультура','start_price':400},
-            {'id':'ARSA', 'description':'УК Арсагера','start_price':700},
-            {'id':'AVAN', 'description':'банк АВАНГАРД','start_price':300},
-            {'id':'BANE', 'description':'Компания Башнефть','start_price':800},
-            {'id':'BELU', 'description':'Белуга Групп','start_price':200},
-            {'id':'BISV', 'description':'Башинформсвязь','start_price':100},
-            {'id':'CHEP', 'description':'Челябинский трубопрокатный завод','start_price':900},           
         ]
     )
 

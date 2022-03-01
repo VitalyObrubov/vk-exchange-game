@@ -25,3 +25,4 @@ def setup_store(app: "Application"):
     app.on_cleanup.append(app.database.disconnect)
  
     app.store = Store(app)
+   
