@@ -151,11 +151,13 @@ class VkApiAccessor(BaseAccessor):
 
             self.logger.info(profiles)
             for raw_user in profiles:
-                user = User(vk_id=raw_user["id"], 
+                user = User(vk_id=raw_user["id"],
+                            game_user_id=0, 
                             name=f'{raw_user["first_name"]} {raw_user["last_name"]}', 
                             create_at=datetime.utcnow(),
                             points = 10000,
-                            buyed_securites=[])
+                            buyed_securites=[],
+                            state = "in_trade")
                 users.append(user)
             return users
            

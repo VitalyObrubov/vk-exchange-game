@@ -33,6 +33,9 @@ def server():
     app.on_startup.append(app.database.connect)
     app.on_shutdown.append(app.database.disconnect)
 
+    app.on_startup.append(app.store.games.connect)
+    app.on_shutdown.append(app.store.games.disconnect)
+
     #app.on_startup.append(app.store.admins.connect)
     #app.on_shutdown.append(app.store.admins.connect)
     return app

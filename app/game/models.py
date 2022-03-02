@@ -20,10 +20,12 @@ class BuyedSecurity:
 @dataclass
 class User:
     vk_id: int
+    game_user_id: int
     name: str
     create_at: datetime
     points: int #кошелек
     buyed_securites: list[BuyedSecurity]
+    state: str #in_trade|finished
 
  
 @dataclass
@@ -33,6 +35,7 @@ class Game:
     chat_id: int
     state: str #started|finished
     trade_round: int
+    db_trade_round_id: int
     users: list[User] 
     traded_sequrites: list[Security]
 
@@ -77,9 +80,10 @@ class GameModel(db.Model):
 class GameUsersModel(db.Model):
     __tablename__ = "game_users"
     id = db.Column(db.Integer(), primary_key=True)
-    game_id = db.Column(db.Integer(),db.ForeignKey("games.id", ondelete='CASCADE'),nullable=False)
-    user_id = db.Column(db.Integer(),db.ForeignKey("users.vk_id"),nullable=False)
-    points = db.Column(db.Integer(),nullable=False)
+    game_id = db.Column(db.Integer(), db.ForeignKey("games.id", ondelete='CASCADE'),nullable=False)
+    user_id = db.Column(db.Integer(), db.ForeignKey("users.vk_id"), nullable=False)
+    points = db.Column(db.Integer(), nullable=False)
+    state = db.Column(db.String(10), nullable = False) #in_trade|finished
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -108,7 +112,10 @@ class BuyedSecuritesModel(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     user_in_game_id = db.Column(db.Integer(),db.ForeignKey("game_users.id", ondelete='CASCADE'),nullable=False)
     security_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False) 
-    ammount = db.Column(db.Integer(),nullable=False) 
+    ammount = db.Column(db.Integer(),nullable=False)
+    uniq_constr = db.UniqueConstraint('user_in_game_id', 'security_id', name='unc_user_secur')
+    #_idx1 = db.Index('idx_user_secur', 'user_in_game_id', 'security_id', unique=True)
+    
     
     def __init__(self, **kw):
         super().__init__(**kw)
