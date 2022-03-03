@@ -1,5 +1,6 @@
 from http.client import NOT_FOUND
-from app.game.models import Game
+from app.game.models import Game, User, Security
+
 
 INVITE_MEESGE = "Привет!<br>Для запуска игры введите /start_game"
 
@@ -42,9 +43,34 @@ SHARES_NOT_ENOUGH = "Не хватает акций с кодом "
 
 def get_text_list_traded_sequrites(game: Game) -> str:
    text = ""
-   for security in game.traded_sequrites:
+   for security in game.traded_sequrites.values():
       text += f"{security.id} {security.description} за {security.price} монет {security.market_event}<br>"
    return text
 
+
+def get_user_profile(game: Game, user: User) -> str:
+   text = f"<br>Портфель пользователя {user.name}<br>"
+   text += f"Сумма на счету {user.points} монет<br>"
+   text += f"Купленные акции<br>"
+   secur_cost = 0
+   for b_secur in user.buyed_securites.values():
+      b_secur_cost = b_secur.ammount*b_secur.security.price
+      text += f"--{b_secur.security.id} {b_secur.security.description} - {b_secur.ammount} шт. на {b_secur_cost} монет<br> "
+      secur_cost += b_secur_cost
+   text += f"Итого акций на {secur_cost} монет<br>"
+   text += f"Итого активов {user.points+secur_cost} монет<br><br>"
+   return text   
+
+
 def generate_game_result(game: Game):
-   return "Результаты игры"
+   text = "Результаты игры<br>"
+   text += f"Игра в чате {game.chat_id}<br>"
+   text += f"Раунд {game.trade_round}<br>"
+   text += f"Торгуемые акции<br>"
+   text += get_text_list_traded_sequrites(game)
+   text += "<br>"
+   text += f"Портфели игроков<br>"
+   for user in game.users.values():
+      text += get_user_profile(game, user)
+   
+   return text

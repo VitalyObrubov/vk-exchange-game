@@ -20,11 +20,10 @@ class BuyedSecurity:
 @dataclass
 class User:
     vk_id: int
-    game_user_id: int
     name: str
     create_at: datetime
     points: int #кошелек
-    buyed_securites: list[BuyedSecurity]
+    buyed_securites: Dict[str, BuyedSecurity] 
     state: str #in_trade|finished
 
  
@@ -36,8 +35,8 @@ class Game:
     state: str #started|finished
     trade_round: int
     db_trade_round_id: int
-    users: list[User] 
-    traded_sequrites: list[Security]
+    users: Dict[int, User] 
+    traded_sequrites: Dict[str, Security]
 
 #===================================================================================================================================
 
@@ -84,7 +83,8 @@ class GameUsersModel(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey("users.vk_id"), nullable=False)
     points = db.Column(db.Integer(), nullable=False)
     state = db.Column(db.String(10), nullable = False) #in_trade|finished
-
+    uniq_constr = db.UniqueConstraint('game_id', 'user_id', name='unc_game_user')
+    
     def __init__(self, **kw):
         super().__init__(**kw)
         self._vk_user: UserModel
@@ -114,7 +114,7 @@ class BuyedSecuritesModel(db.Model):
     security_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False) 
     ammount = db.Column(db.Integer(),nullable=False)
     uniq_constr = db.UniqueConstraint('user_in_game_id', 'security_id', name='unc_user_secur')
-    #_idx1 = db.Index('idx_user_secur', 'user_in_game_id', 'security_id', unique=True)
+   
     
     
     def __init__(self, **kw):
@@ -129,39 +129,15 @@ class BuyedSecuritesModel(db.Model):
     def sequrity(self,val: "SecuritesModel"):
         self._sequrity=val
 
-class TradeRoundsModel(db.Model):
-    __tablename__ = "trade_rounds"
-    id = db.Column(db.Integer(), primary_key=True)
-    number_in_game = db.Column(db.Integer(),nullable = False)
-    state = db.Column(db.String(30),nullable = False)
-    game_id = db.Column(db.Integer(),db.ForeignKey("games.id", ondelete='CASCADE'),nullable=False)
-
-    def __init__(self, **kw):
-        super().__init__(**kw)
-        self._traded_securites = []
-
-    @property
-    def traded_securites(self):
-        return self._traded_securites
-
-    @traded_securites.setter
-    def traded_securites(self,val):
-        if val is not None:
-            self._traded_securites.append(val)
-
-class MarketEventsModel(db.Model):
-    __tablename__ = "market_events"
-    id = db.Column(db.Integer(), primary_key=True)
-    description = db.Column(db.Unicode,nullable = False)
-    diff = db.Column(db.Integer(), nullable=False) 
-
 class TradedSecuritesModel(db.Model):
     __tablename__ = "traded_securites"
     sequrity_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False)
     price = db.Column(db.Integer()) 
     round_id = db.Column(db.Integer(),db.ForeignKey("trade_rounds.id", ondelete='CASCADE'),nullable=False)
     market_event_id = db.Column(db.Integer(),db.ForeignKey("market_events.id", ondelete='CASCADE'),nullable=False)
-    
+    uniq_constr = db.UniqueConstraint('sequrity_id', 'round_id', name='unc_secur_round') 
+ 
+  
     def __init__(self, **kw):
         super().__init__(**kw)
         self._security: SecuritesModel
@@ -182,6 +158,34 @@ class TradedSecuritesModel(db.Model):
     @security.setter
     def security(self,val: "SecuritesModel"):
         self._security=val
+
+
+class TradeRoundsModel(db.Model):
+    __tablename__ = "trade_rounds"
+    id = db.Column(db.Integer(), primary_key=True)
+    number_in_game = db.Column(db.Integer(),nullable = False)
+    state = db.Column(db.String(30),nullable = False)
+    game_id = db.Column(db.Integer(),db.ForeignKey("games.id", ondelete='CASCADE'),nullable=False)
+    uniq_constr = db.UniqueConstraint('number_in_game', 'game_id', name='unc_game_num_in_game')
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._traded_securites = []
+
+    @property
+    def traded_securites(self):
+        return self._traded_securites
+
+    @traded_securites.setter
+    def traded_securites(self,val):
+        if val is not None:
+            self._traded_securites.append(val)
+
+class MarketEventsModel(db.Model):
+    __tablename__ = "market_events"
+    id = db.Column(db.Integer(), primary_key=True)
+    description = db.Column(db.Unicode,nullable = False)
+    diff = db.Column(db.Integer(), nullable=False) 
 
 class TradeJornalModel(db.Model):
     __tablename__ = "trade_jornal"

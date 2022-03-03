@@ -13,7 +13,7 @@ def errors_catching(func):
             return e
     return wrapper
 
-def errors_catching_asinc(func):
+def errors_catching_async(func):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         try:

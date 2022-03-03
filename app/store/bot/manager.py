@@ -19,7 +19,8 @@ class BotManager:
                 message_text = INVITE_MEESGE
 
             elif update.object.text.startswith("/start_game"):
-                message_text = await self.app.store.games.start_game(chat_id)
+                users = await self.app.store.vk_api.get_users(chat_id) 
+                message_text = await self.app.store.games.start_game(chat_id, users)
  
             elif update.object.text.startswith("/help"):
                 message_text = self.app.store.games.get_help(chat_id)            
@@ -33,8 +34,11 @@ class BotManager:
             elif update.object.text.startswith("/finish"):
                 message_text = await self.app.store.games.finish_round_for_user(chat_id, update.object.user_id, update.object.text)           
 
+            elif update.object.text.startswith("/info"):
+                message_text = self.app.store.games.get_info(chat_id)            
+           
             elif update.object.text.startswith("/stop_game"):
-                message_text = await self.app.store.games.get_help(chat_id)            
+                message_text = await self.app.store.games.stop_game(chat_id)            
            
             else:
                 message_text = UNKNOWN_COMMAND

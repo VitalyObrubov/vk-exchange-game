@@ -2,13 +2,13 @@ import os
 from unittest.mock import AsyncMock
 import pytest
 from aiohttp.test_utils import TestClient, loop_context
+from gino import GinoEngine
+import functools
 
 from app.store import Store
 from app.web.app import setup_app
 from app.web.config import Config
 from app.store import Database
-import sqlalchemy
-import logging
 
 
 @pytest.fixture(scope="session")
@@ -45,21 +45,41 @@ def server():
 def store(server) -> Store:
     return server.store
 
-"""
 @pytest.fixture(autouse=True, scope="function")
+async def db_transaction(cli):
 
-async def clear_db(server):
-    yield
-    db = server.database.db
-    for table in db.sorted_tables:
-        await db.status(db.text(f"TRUNCATE {table.name} CASCADE"))
-        try:
-            row = await db.status(
-                db.text(f"ALTER SEQUENCE {table.name}_id_seq RESTART WITH 1")
+    db = cli.app.database.db
+    real_acquire = GinoEngine.acquire
+
+    async with db.acquire() as conn:
+
+        class _AcquireContext:
+            __slots__ = ["_acquire", "_conn"]
+
+            def __init__(self, acquire):
+                self._acquire = acquire
+
+            async def __aenter__(self):
+                return conn
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                pass
+
+            def __await__(self):
+                return conn
+
+        def acquire(
+            self, *, timeout=None, reuse=False, lazy=False, reusable=True
+        ):
+            return _AcquireContext(
+                functools.partial(self._acquire, timeout, reuse, lazy, reusable)
             )
-        except Exception:
-            pass
-"""
+
+        GinoEngine.acquire = acquire
+        transaction = await conn.transaction()
+        yield
+        await transaction.rollback()
+        GinoEngine.acquire = real_acquire
 
 @pytest.fixture
 def config(server) -> Config:
