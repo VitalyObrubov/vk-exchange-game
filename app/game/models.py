@@ -59,8 +59,9 @@ class GameModel(db.Model):
     
     def __init__(self, **kw):
         super().__init__(**kw)
-        self._id_list = []
+        self._user_id_list = []
         self._users = []
+        self._trade_round: TradeRoundsModel
   
     @property
     def users(self):
@@ -69,11 +70,19 @@ class GameModel(db.Model):
     @users.setter
     def users(self,val):
         if val is not None:
-            if val.id in self._id_list:
+            if val.id in self._user_id_list:
                 return
             self._users.append(val)
-            self._id_list.append(val.id)
+            self._user_id_list.append(val.id)
+    
+    @property
+    def trade_round(self) -> "TradeRoundsModel":
+        return self._trade_round
 
+    @trade_round.setter
+    def trade_round(self,val: "TradeRoundsModel"):
+        self._trade_round=val
+    #----------------------------------    
     def get_game(self) -> Game:
         game = Game(id=self.id, 
                     create_at=self.create_at,
@@ -166,6 +175,7 @@ class TradedSecuritesModel(db.Model):
         super().__init__(**kw)
         self._security: SecuritesModel
         self._market_event: MarketEventsModel
+        
       
     @property
     def market_event(self) -> "MarketEventsModel":
@@ -195,7 +205,7 @@ class TradeRoundsModel(db.Model):
     def __init__(self, **kw):
         super().__init__(**kw)
         self._traded_securites = []
-
+        self._secur_id_list = []
     @property
     def traded_securites(self):
         return self._traded_securites
@@ -203,7 +213,10 @@ class TradeRoundsModel(db.Model):
     @traded_securites.setter
     def traded_securites(self,val):
         if val is not None:
+            if val.sequrity_id in self._secur_id_list:
+                return
             self._traded_securites.append(val)
+            self._secur_id_list.append(val.sequrity_id)
 
 class MarketEventsModel(db.Model):
     __tablename__ = "market_events"

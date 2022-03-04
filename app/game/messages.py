@@ -48,7 +48,8 @@ def get_text_list_traded_sequrites(game: Game) -> str:
    return text
 
 
-def get_user_profile(game: Game, user: User) -> str:
+def get_user_profile(user: User) -> dict:
+   res = {}
    text = f"<br>Портфель пользователя {user.name}<br>"
    text += f"Сумма на счету {user.points} монет<br>"
    text += f"Купленные акции<br>"
@@ -59,10 +60,12 @@ def get_user_profile(game: Game, user: User) -> str:
       secur_cost += b_secur_cost
    text += f"Итого акций на {secur_cost} монет<br>"
    text += f"Итого активов {user.points+secur_cost} монет<br><br>"
-   return text   
+   res["text"] = text
+   res["total"] = user.points+secur_cost
+   return res   
 
 
-def generate_game_result(game: Game):
+def generate_game_result(game: Game) -> str:
    text = "Результаты игры<br>"
    text += f"Игра в чате {game.chat_id}<br>"
    text += f"Раунд {game.trade_round}<br>"
@@ -70,7 +73,14 @@ def generate_game_result(game: Game):
    text += get_text_list_traded_sequrites(game)
    text += "<br>"
    text += f"Портфели игроков<br>"
+   winner = None
+   win_total = 0
    for user in game.users.values():
-      text += get_user_profile(game, user)
+      res = get_user_profile(user)
+      text += res["text"]
+      if res["total"] > win_total:
+         win_total = res["total"]
+         winner = user
+   text += f"<br>Выигрывает {user.name} со счетом в {win_total} монет"
    
    return text

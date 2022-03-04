@@ -1,7 +1,7 @@
 from app.game.models import Game
 from app.game.messages import *
 import typing
-
+from typing import Optional, List, Union, Dict
 if typing.TYPE_CHECKING:
     from app.web.app import Application
 
@@ -12,7 +12,7 @@ def game_by_id(app: "Application", id: int) -> Game:
             return app_game
     return None
 
-def check_operation(app: "Application", chat_id: int, user_id: int, mess_text: str):
+def check_operation(app: "Application", chat_id: int, user_id: int, mess_text: str) -> Union[dict, str]:
     res = {}
     game = app.games.get(chat_id)
     if game == None:

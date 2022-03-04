@@ -151,34 +151,47 @@ class GameAccessor(BaseAccessor):
             return res
 
     @errors_catching_async
-    async def restore_games_on_startup(self):# -> Union(List(Game), str):
+    async def restore_games_on_startup(self) -> Union[list, str]:
         created_games = []
-        #Запрос ветки Игра - пользователи игры - купленные акции
-        db_games_users = (
+        SecuritesModelAls = SecuritesModel.alias()
+        db_games = (
             await GameModel
             .outerjoin(GameUsersModel, GameModel.id == GameUsersModel.game_id)
             .outerjoin(UserModel, UserModel.vk_id == GameUsersModel.user_id)
             .outerjoin(BuyedSecuritesModel, BuyedSecuritesModel.user_in_game_id == GameUsersModel.id)
             .outerjoin(SecuritesModel, SecuritesModel.id == BuyedSecuritesModel.security_id)
-            .select()
-            .where(GameModel.state == "started")
+            .outerjoin(TradeRoundsModel,  GameModel.id == TradeRoundsModel.game_id)
+            .outerjoin(TradedSecuritesModel, TradeRoundsModel.id == TradedSecuritesModel.round_id)
+            .outerjoin(SecuritesModelAls, TradedSecuritesModel.sequrity_id == SecuritesModelAls.id)
+            .outerjoin(MarketEventsModel, TradedSecuritesModel.market_event_id == MarketEventsModel.id)            .select()
+            .where(and_(GameModel.state == "started", TradeRoundsModel.state == "started"))
             .order_by(GameModel.id, GameUsersModel.id) 
             .gino.load(
-                GameModel.distinct(GameModel.id).load(
-                    users=GameUsersModel.distinct(GameUsersModel.id).load(
+                GameModel.distinct(GameModel.id)
+                .load(
+                    users=GameUsersModel.distinct(GameUsersModel.id)
+                    .load(
                         vk_user = UserModel,
                         buyed_securites = BuyedSecuritesModel.load(
                             security = SecuritesModel
                         )
                     )
                 )
+                .load(
+                    trade_round = TradeRoundsModel.distinct(TradeRoundsModel.id)
+                    .load(
+                        traded_securites = TradedSecuritesModel.distinct(TradedSecuritesModel.sequrity_id)
+                        .load(
+                            market_event = MarketEventsModel,
+                            security = SecuritesModelAls,
+                        )
+                    )
+                )
             )
             .all()
         )
-
-        for db_game in db_games_users:
+        for db_game in db_games:
             game = db_game.get_game()
-
             await self.create_traded_sequrites(game)
             for db_user in db_game.users:
                 user = db_user.get_user()
@@ -186,40 +199,16 @@ class GameAccessor(BaseAccessor):
                 for db_b_secur in db_user.buyed_securites:
                     b_secur = db_b_secur.get_b_secur(game)
                     user.buyed_securites[b_secur.security.id] = b_secur
-            self.app.games[game.chat_id] = game
-            created_games.append(game)
-
-        #Запрос ветки Игра - Раунд игры - Торгуемые акции
-        db_games_rounds = (
-            await TradeRoundsModel
-            .outerjoin(TradedSecuritesModel, TradeRoundsModel.id == TradedSecuritesModel.round_id)
-            .outerjoin(SecuritesModel, TradedSecuritesModel.sequrity_id == SecuritesModel.id)
-            .outerjoin(MarketEventsModel, TradedSecuritesModel.market_event_id == MarketEventsModel.id)
-            .select()
-            .where(TradeRoundsModel.state == "started")
-            .order_by(TradeRoundsModel.game_id, TradedSecuritesModel.sequrity_id)
-            .gino.load(
-                TradeRoundsModel.distinct(TradeRoundsModel.id)
-                .load(
-                    traded_securites = TradedSecuritesModel.load(
-                        market_event = MarketEventsModel,
-                        security = SecuritesModel,
-                    )
-                )
-            )
-            .all()
-        )
-        for db_round in db_games_rounds:
-            game = game_by_id(self.app, db_round.game_id)
+            db_round = db_game.trade_round
             game.trade_round = db_round.number_in_game
             for db_tr_secur in db_round.traded_securites:
                 tr_secur = game.traded_sequrites.get(db_tr_secur.sequrity_id)
                 tr_secur.price = db_tr_secur.price
                 tr_secur.market_event = f"{db_tr_secur.market_event.description} цена изменилась на {db_tr_secur.market_event.diff}%"
-        
+            self.app.games[game.chat_id] = game
+            created_games.append(game)
+            
         return created_games
-
-  
 
     @errors_catching_async
     async def buy_securyties(self, chat_id: int, user_id: int, mess_text: str):
