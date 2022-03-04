@@ -1,13 +1,14 @@
 import random
 import typing
-from typing import Optional
+from typing import Optional, List
 
 from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
-
+from datetime import datetime
 from app.base.base_accessor import BaseAccessor
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
 from app.store.vk_api.poller import Poller
+from app.game.models import User
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -85,6 +86,9 @@ class VkApiAccessor(BaseAccessor):
             raw_updates = data.get("updates", [])
             updates = []
             for update in raw_updates:
+                action = update["object"]["message"].get("action")#в сообщении о добавлении в беседу есть это поле
+                if action:
+                    action = action["type"]
                 updates.append(
                     Update(
                         type=update["type"],
@@ -92,7 +96,8 @@ class VkApiAccessor(BaseAccessor):
                             id=update["object"]["message"]["id"],
                             user_id=update["object"]["message"]["from_id"],
                             peer_id=update["object"]["message"]["peer_id"],
-                            body=update["object"]["message"]["text"],
+                            text=update["object"]["message"]["text"],
+                            action=action,
                             
                         ),
                     )
@@ -117,3 +122,40 @@ class VkApiAccessor(BaseAccessor):
         ) as resp:
             data = await resp.json()
             self.logger.info(data)
+
+    # запрашивает с сервера вк данные пользователей чата и формирует список объектов User
+    # не понимаю зачем здесь проверять правильность ответа все ошибки ловятся при отладке
+    # и могут возникнуть только если изменится протокол вк, а значит придется переписывть код
+    async def get_users(self, chat_id) -> List[User]:
+        async with self.session.post(
+            self._build_query(
+                host=API_PATH,
+                method="messages.getConversationMembers",
+                params={
+                    "peer_id": chat_id,
+                    "fields":"first_name, last_name",
+                    "access_token": self.app.config.bot.token,
+                },
+            )
+        ) as resp:
+            users = []
+            if resp.status != 200:
+                self.logger.error(f"Запрос списка пользователей не удался resp.status = {resp.status}")
+                return users
+            resp_json = (await resp.json())
+            try:
+                profiles = resp_json["response"]["profiles"]
+            except :
+                self.logger.error(f"Запрос списка пользователей: неверная структура ответа")
+                return users
+
+            self.logger.info(profiles)
+            for raw_user in profiles:
+                user = User(vk_id=raw_user["id"], 
+                            name=f'{raw_user["first_name"]} {raw_user["last_name"]}', 
+                            create_at=datetime.utcnow(),
+                            points = 10000,
+                            buyed_securites=[])
+                users.append(user)
+            return users
+           

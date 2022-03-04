@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from aiohttp.web import (
     Application as AiohttpApplication,
@@ -10,6 +10,7 @@ from aiohttp_session import setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
 #from app.admin.models import Admin
+from app.game.models import Game
 from app.store import setup_store, Store
 from app.store.database.database import Database
 from app.web.config import Config, setup_config
@@ -59,5 +60,5 @@ def setup_app(config_path: str) -> Application:
     )
     setup_middlewares(app)
     setup_store(app)
-
+    app.games = [] #здесь хранятся текущие игры из разных чатов
     return app

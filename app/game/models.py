@@ -1,67 +1,187 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from re import A
-from typing import Optional, List
-
+from typing import Optional, List, Dict
+from datetime  import datetime
 from app.store.database.gino import db
 
-'''
 @dataclass
-class Theme:
-    id: Optional[int]
-    title: str
-
-# TODO
-# Дописать все необходимые поля модели
-
-class ThemeModel(db.Model):
-    __tablename__ = "themes"
-    id = db.Column(db.Integer(), primary_key=True)
-    title = db.Column(db.String(300),nullable = False, unique=True)
-   
-# TODO
-# Дописать все необходимые поля модели
+class Security:
+    id: str
+    description: str
+    price: int
+    market_event: Optional[str] #причина изменения цены и процент изменения
 
 @dataclass
-class Question:
-    id: Optional[int]
-    title: str
-    theme_id: int
-    answers: list["Answer"]
+class BuyedSecurity:
+    id: int
+    security: Security
+    ammount: int
 
-# TODO
-# Дописать все необходимые поля модели
+@dataclass
+class User:
+    vk_id: int
+    name: str
+    create_at: datetime
+    points: int #кошелек
+    buyed_securites: list[BuyedSecurity]
 
-class AnswerModel(db.Model):
-    __tablename__ = "answers"
-    title = db.Column(db.String(300),nullable = False)
-    is_correct = db.Column(db.Boolean())
-    question_id = db.Column(db.Integer(),db.ForeignKey("questions.id", ondelete='CASCADE'),nullable=False)
+ 
+@dataclass
+class Game:
+    id: int
+    create_at: datetime
+    chat_id: int
+    state: str #started|finished
+    trade_round: int
+    users: list[User] 
+    traded_sequrites: list[Security]
 
-class QuestionModel(db.Model):
-    __tablename__ = "questions"
+#===================================================================================================================================
+
+class UserModel(db.Model):
+    __tablename__ = "users"
+    vk_id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.Unicode,nullable = False)
+    create_at = db.Column(db.DateTime(timezone=True), nullable=False)
+
+class SecuritesModel(db.Model):
+    __tablename__ = "securites"
+    id = db.Column(db.String(10), primary_key=True)
+    description = db.Column(db.Unicode,nullable = False)
+    start_price = db.Column(db.Integer())
+
+class GameModel(db.Model):
+    __tablename__ = "games"
     id = db.Column(db.Integer(), primary_key=True)
-    title = db.Column(db.String(300),nullable = False, unique=True)
-    theme_id = db.Column(db.Integer(),db.ForeignKey("themes.id", ondelete='CASCADE'), nullable=False)
+    create_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    chat_id = db.Column(db.Integer(), nullable=False)
+    state = db.Column(db.String(30), nullable = False)
     
     def __init__(self, **kw):
         super().__init__(**kw)
-        self._answers: List[AnswerModel] = []
+        self._id_list = []
+        self._users = []
+  
+    @property
+    def users(self):
+        return self._users
+
+    @users.setter
+    def users(self,val):
+        if val is not None:
+            if val.id in self._id_list:
+                return
+            self._users.append(val)
+            self._id_list.append(val.id)
+
+class GameUsersModel(db.Model):
+    __tablename__ = "game_users"
+    id = db.Column(db.Integer(), primary_key=True)
+    game_id = db.Column(db.Integer(),db.ForeignKey("games.id", ondelete='CASCADE'),nullable=False)
+    user_id = db.Column(db.Integer(),db.ForeignKey("users.vk_id"),nullable=False)
+    points = db.Column(db.Integer(),nullable=False)
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._vk_user: UserModel
+        self._buyed_securites = []
 
     @property
-    def answers(self) -> List[AnswerModel]:
-        return self._answers
+    def vk_user(self) -> "UserModel":
+        return self._vk_user
 
-    @answers.setter
-    def answers(self,val: Optional[AnswerModel]):
+    @vk_user.setter
+    def vk_user(self,val: "UserModel"):
+        self._vk_user=val
+
+    @property
+    def buyed_securites(self):
+        return self._buyed_securites
+
+    @buyed_securites.setter
+    def buyed_securites(self,val):
         if val is not None:
-            self._answers.append(val)
+            self._buyed_securites.append(val)
 
-
-
+class BuyedSecuritesModel(db.Model):
+    __tablename__ = "buyed_securites"
+    id = db.Column(db.Integer(), primary_key=True)
+    user_in_game_id = db.Column(db.Integer(),db.ForeignKey("game_users.id", ondelete='CASCADE'),nullable=False)
+    security_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False) 
+    ammount = db.Column(db.Integer(),nullable=False) 
     
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._sequrity: SecuritesModel
+        
+    @property
+    def sequrity(self) -> "SecuritesModel":
+        return self._sequrity
 
-@dataclass
-class Answer:
-    title: str
-    is_correct: bool
-'''
+    @sequrity.setter
+    def sequrity(self,val: "SecuritesModel"):
+        self._sequrity=val
+
+class TradeRoundsModel(db.Model):
+    __tablename__ = "trade_rounds"
+    id = db.Column(db.Integer(), primary_key=True)
+    number_in_game = db.Column(db.Integer(),nullable = False)
+    state = db.Column(db.String(30),nullable = False)
+    game_id = db.Column(db.Integer(),db.ForeignKey("games.id", ondelete='CASCADE'),nullable=False)
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._traded_securites = []
+
+    @property
+    def traded_securites(self):
+        return self._traded_securites
+
+    @traded_securites.setter
+    def traded_securites(self,val):
+        if val is not None:
+            self._traded_securites.append(val)
+
+class MarketEventsModel(db.Model):
+    __tablename__ = "market_events"
+    id = db.Column(db.Integer(), primary_key=True)
+    description = db.Column(db.Unicode,nullable = False)
+    diff = db.Column(db.Integer(), nullable=False) 
+
+class TradedSecuritesModel(db.Model):
+    __tablename__ = "traded_securites"
+    sequrity_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False)
+    price = db.Column(db.Integer()) 
+    round_id = db.Column(db.Integer(),db.ForeignKey("trade_rounds.id", ondelete='CASCADE'),nullable=False)
+    market_event_id = db.Column(db.Integer(),db.ForeignKey("market_events.id", ondelete='CASCADE'),nullable=False)
+    
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._security: SecuritesModel
+        self._market_event: MarketEventsModel
+      
+    @property
+    def market_event(self) -> "MarketEventsModel":
+        return self._market_event
+
+    @market_event.setter
+    def market_event(self,val: "MarketEventsModel"):
+        self._market_event=val
+
+    @property
+    def security(self) -> "SecuritesModel":
+        return self._security
+
+    @security.setter
+    def security(self,val: "SecuritesModel"):
+        self._security=val
+
+class TradeJornalModel(db.Model):
+    __tablename__ = "trade_jornal"
+    id = db.Column(db.Integer(), primary_key=True)
+    round_id = db.Column(db.Integer(),db.ForeignKey("trade_rounds.id", ondelete='CASCADE'),nullable=False)
+    user_id = db.Column(db.Integer(),db.ForeignKey("users.vk_id"),nullable=False)
+    sequrity_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False)
+    operation = db.Column(db.String(30),nullable = False)
+    ammount = db.Column(db.Integer()) 
+

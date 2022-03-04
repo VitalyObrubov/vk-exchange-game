@@ -14,7 +14,7 @@ class Poller:
     async def start(self):
         self.is_running = True
         self.poll_task = asyncio.create_task(self.poll())
-
+        
     async def stop(self):
         self.is_running = False
         await self.poll_task

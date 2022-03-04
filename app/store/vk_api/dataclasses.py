@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
@@ -6,7 +7,8 @@ class UpdateObject:
     id: int
     user_id: int
     peer_id: int
-    body: str
+    text: str
+    action: Optional[str]
 
 
 @dataclass

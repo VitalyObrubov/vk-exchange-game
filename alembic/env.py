@@ -11,7 +11,10 @@ from alembic import context
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 
-with open(os.environ.get('/home/vitaly/vk-exchange-game/config.yml')) as fh:
+
+with open('config.yml') as fh:
+#with open('/home/vitaly/vk-exchange-game/config.yml') as fh:
+#with open(os.environ.get('CONFIGPATH')) as fh:
     cfg = yaml.safe_load(fh)
     app_config = Config(**cfg).database
    
