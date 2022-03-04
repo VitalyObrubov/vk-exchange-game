@@ -78,7 +78,6 @@ class GameAccessor(BaseAccessor):
             return "Завершена игра<br>" + generate_game_result(game)
 
         db_trade_round = await TradeRoundsModel.create(number_in_game=game.trade_round, state="started", game_id=game.id)
-        game.db_trade_round_id = db_trade_round.id
         market_events = await MarketEventsModel.query.gino.all()
         events_count = len(market_events)
         traded_securites = [] #сбор данных для загрузки в базу
@@ -88,7 +87,7 @@ class GameAccessor(BaseAccessor):
             sequrity.market_event = f"{random_event.description} цена изменилась на {random_event.diff}%"
             traded_securites.append({"sequrity_id":sequrity.id, "price":sequrity.price, "round_id":db_trade_round.id, "market_event_id":random_event.id})
 
-        await insert(TradedSecuritesModel).values(traded_securites).on_conflict_do_nothing().gino.all()
+        await insert(TradedSecuritesModel).values(traded_securites).on_conflict_do_nothing().gino.status()
 
         res = "Новые цены на акции<br>" + get_text_list_traded_sequrites(game)
         return res
@@ -108,8 +107,8 @@ class GameAccessor(BaseAccessor):
                 all_users.append({"vk_id":user.vk_id, "name":user.name, "create_at":user.create_at})
                 game_users.append({"game_id":game.id, "user_id":user.vk_id, "points":user.points, "state":"in_trade"})
             
-            await insert(UserModel).values(all_users).on_conflict_do_nothing().gino.all()
-            await insert(GameUsersModel).values(game_users).on_conflict_do_nothing().gino.all()
+            await insert(UserModel).values(all_users).on_conflict_do_nothing().gino.status()
+            await insert(GameUsersModel).values(game_users).on_conflict_do_nothing().gino.status()
 
             res = await self.create_next_trade_round(game)
             
@@ -136,7 +135,6 @@ class GameAccessor(BaseAccessor):
                     chat_id=chat_id,
                     state="started",
                     trade_round=0,
-                    db_trade_round_id=0,
                     users={},
                     traded_sequrites={})
         game.users = users
@@ -179,31 +177,14 @@ class GameAccessor(BaseAccessor):
         )
 
         for db_game in db_games_users:
-            game = Game(
-                id=db_game.id, 
-                create_at=db_game.create_at,
-                chat_id=db_game.chat_id,
-                state=db_game.state,
-                trade_round=0,
-                db_trade_round_id=0,
-                users={},
-                traded_sequrites={})
+            game = db_game.get_game()
+
             await self.create_traded_sequrites(game)
             for db_user in db_game.users:
-                user = User(
-                    vk_id=db_user.vk_user.vk_id,
-                    name=db_user.vk_user.name, 
-                    create_at=db_user.vk_user.create_at,
-                    points = db_user.points,
-                    buyed_securites={},
-                    state =  db_user.state)
+                user = db_user.get_user()
                 game.users[user.vk_id] = user
                 for db_b_secur in db_user.buyed_securites:
-                    b_secur = BuyedSecurity(
-                        id=db_b_secur.id,
-                        security=game.traded_sequrites.get(db_b_secur.security_id),
-                        ammount=db_b_secur.ammount
-                    )
+                    b_secur = db_b_secur.get_b_secur(game)
                     user.buyed_securites[b_secur.security.id] = b_secur
             self.app.games[game.chat_id] = game
             created_games.append(game)
@@ -231,7 +212,6 @@ class GameAccessor(BaseAccessor):
         for db_round in db_games_rounds:
             game = game_by_id(self.app, db_round.game_id)
             game.trade_round = db_round.number_in_game
-            game.db_trade_round_id = db_round.id
             for db_tr_secur in db_round.traded_securites:
                 tr_secur = game.traded_sequrites.get(db_tr_secur.sequrity_id)
                 tr_secur.price = db_tr_secur.price
@@ -253,12 +233,13 @@ class GameAccessor(BaseAccessor):
         #Выполняем операцию покупки
         buyed_sequrity = user.buyed_securites.get(security.id)
         if buyed_sequrity == None:
-            buyed_sequrity = BuyedSecurity(id = 0 ,security = security, ammount = 0)
+            buyed_sequrity = BuyedSecurity(security = security, ammount = 0)
             user.buyed_securites[buyed_sequrity.security.id] = buyed_sequrity
         buyed_sequrity.ammount +=ammount
         user.points -= security.price*ammount
         async with db.transaction():
-            await TradeJornalModel.create(round_id=game.db_trade_round_id, user_id=user_id, sequrity_id=security.id, operation="buy", ammount=ammount)
+            db_t_round = await TradeRoundsModel.query.where(and_(TradeRoundsModel.game_id == game.id, TradeRoundsModel.number_in_game == game.trade_round)).gino.first()  
+            await TradeJornalModel.create(round_id=db_t_round.id, user_id=user_id, sequrity_id=security.id, operation="buy", ammount=ammount)
            
             db_game_user = await(
                 insert(GameUsersModel)
@@ -272,7 +253,7 @@ class GameAccessor(BaseAccessor):
                 .returning(*GameUsersModel).gino.first()  
                 )
             
-            db_buyed_sequrity = await(
+            await(
                 insert(BuyedSecuritesModel)
                 .values(
                     user_in_game_id = db_game_user.id, 
@@ -280,10 +261,9 @@ class GameAccessor(BaseAccessor):
                     ammount = buyed_sequrity.ammount)
                 .on_conflict_do_update(
                     index_elements=[BuyedSecuritesModel.user_in_game_id, BuyedSecuritesModel.security_id], set_=dict(ammount=buyed_sequrity.ammount))
-                .returning(*BuyedSecuritesModel).gino.first()  
+                .returning(*BuyedSecuritesModel).gino.status()  
             )
-         
-            buyed_sequrity.id = db_buyed_sequrity.id        
+                
 
         return f"Удачная покупка. Остаток {user.points} монет"
 
@@ -303,7 +283,8 @@ class GameAccessor(BaseAccessor):
         buyed_sequrity.ammount -=ammount
         user.points += security.price*ammount
         async with db.transaction():
-            await TradeJornalModel.create(round_id=game.db_trade_round_id, user_id=user_id, sequrity_id=security.id, operation="sell", ammount=ammount)
+            db_t_round = await TradeRoundsModel.query.where(and_(TradeRoundsModel.game_id == game.id, TradeRoundsModel.number_in_game == game.trade_round)).gino.first()  
+            await TradeJornalModel.create(round_id=db_t_round.id, user_id=user_id, sequrity_id=security.id, operation="sell", ammount=ammount)
            
             db_game_user = await(insert(GameUsersModel)
                 .values(
@@ -316,14 +297,14 @@ class GameAccessor(BaseAccessor):
                 .gino.first()
             )           
 
-            db_buyed_sequrity = await(insert(BuyedSecuritesModel)
+            await(insert(BuyedSecuritesModel)
                 .values(
                     user_in_game_id = db_game_user.id,
                     security_id = security.id, 
                     ammount = buyed_sequrity.ammount)
                 .on_conflict_do_update(index_elements=[BuyedSecuritesModel.user_in_game_id, BuyedSecuritesModel.security_id], set_=dict(ammount=buyed_sequrity.ammount))
                 .returning(*BuyedSecuritesModel)
-                .gino.first()
+                .gino.status()
             )
                        
         

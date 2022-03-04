@@ -13,7 +13,6 @@ class Security:
 
 @dataclass
 class BuyedSecurity:
-    id: int
     security: Security
     ammount: int
 
@@ -34,7 +33,6 @@ class Game:
     chat_id: int
     state: str #started|finished
     trade_round: int
-    db_trade_round_id: int
     users: Dict[int, User] 
     traded_sequrites: Dict[str, Security]
 
@@ -76,6 +74,16 @@ class GameModel(db.Model):
             self._users.append(val)
             self._id_list.append(val.id)
 
+    def get_game(self) -> Game:
+        game = Game(id=self.id, 
+                    create_at=self.create_at,
+                    chat_id=self.chat_id,
+                    state=self.state,
+                    trade_round=0,
+                    users={},
+                    traded_sequrites={})
+        return game
+
 class GameUsersModel(db.Model):
     __tablename__ = "game_users"
     id = db.Column(db.Integer(), primary_key=True)
@@ -106,6 +114,16 @@ class GameUsersModel(db.Model):
     def buyed_securites(self,val):
         if val is not None:
             self._buyed_securites.append(val)
+    
+    def get_user(self) -> User:
+        user = User(
+            vk_id=self.vk_user.vk_id,
+            name=self.vk_user.name, 
+            create_at=self.vk_user.create_at,
+            points = self.points,
+            buyed_securites={},
+            state =  self.state)        
+        return user
 
 class BuyedSecuritesModel(db.Model):
     __tablename__ = "buyed_securites"
@@ -114,8 +132,6 @@ class BuyedSecuritesModel(db.Model):
     security_id = db.Column(db.String(10),db.ForeignKey("securites.id", ondelete='CASCADE'),nullable=False) 
     ammount = db.Column(db.Integer(),nullable=False)
     uniq_constr = db.UniqueConstraint('user_in_game_id', 'security_id', name='unc_user_secur')
-   
-    
     
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -128,6 +144,14 @@ class BuyedSecuritesModel(db.Model):
     @sequrity.setter
     def sequrity(self,val: "SecuritesModel"):
         self._sequrity=val
+
+    def get_b_secur(self, game: Game) -> BuyedSecurity:
+        b_secur = BuyedSecurity(
+            security = game.traded_sequrites.get(self.security_id),
+            ammount = self.ammount
+        )
+        return b_secur
+
 
 class TradedSecuritesModel(db.Model):
     __tablename__ = "traded_securites"
