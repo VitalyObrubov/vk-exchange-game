@@ -10,7 +10,7 @@ START_GAME_MESSAGE = """Игра начата!<br>
                        У каждого на счету 10000 монет<br>
                        Продаются следующие акции<br>      
                     """
-BAD_USER_REQUEST = "Запрос пользователей не удался. Ошибка программы"
+BAD_USER_REQUEST = "Запрос пользователей не удался. Ошибка программы. Проверьте, что бот - админ"
 
 GAME_ALREADY_RUNNING = "Игра уже запущена.<br>Для справки по коммандам наберите /help "
 
@@ -81,6 +81,6 @@ def generate_game_result(game: Game) -> str:
       if res["total"] > win_total:
          win_total = res["total"]
          winner = user
-   text += f"<br>Выигрывает {user.name} со счетом в {win_total} монет"
+   text += f"<br>Выигрывает {winner.name} со счетом в {win_total} монет"
    
    return text

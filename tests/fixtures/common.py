@@ -4,6 +4,7 @@ import pytest
 from aiohttp.test_utils import TestClient, loop_context
 from gino import GinoEngine
 import functools
+from aioresponses import aioresponses
 
 from app.store import Store
 from app.web.app import setup_app
@@ -26,7 +27,7 @@ def server():
     )
     app.on_startup.clear()
     app.on_shutdown.clear()
-    app.store.vk_api = AsyncMock()
+    #app.store.vk_api = AsyncMock()
     app.store.vk_api.send_message = AsyncMock()
 
     app.database = Database(app)
@@ -35,6 +36,10 @@ def server():
 
     app.on_startup.append(app.store.games.connect)
     app.on_shutdown.append(app.store.games.disconnect)
+
+    
+    #app.on_startup.append(app.store.vk_api.connect)
+    #app.on_shutdown.append(app.store.vk_api.disconnect)
 
     #app.on_startup.append(app.store.admins.connect)
     #app.on_shutdown.append(app.store.admins.connect)
@@ -101,3 +106,8 @@ async def authed_cli(cli, config) -> TestClient:
         },
     )
     yield cli
+
+@pytest.fixture(autouse=True)
+async def mock_response(cli):
+    with aioresponses(passthrough=["http://127.0.0.1"]) as responses_mock:
+        yield responses_mock

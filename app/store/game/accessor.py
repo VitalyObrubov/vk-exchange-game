@@ -2,14 +2,12 @@ import random
 import typing
 from wave import Wave_write
 
-from app.base.decorators import errors_catching, errors_catching_async
 from typing import Optional, List, Union, Dict
 from app.store.database.gino import db
 from app.base.base_accessor import BaseAccessor
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import insert
 from app.game.messages import *
-from app.store.game.utils import *
 from logging import getLogger
 from sqlalchemy import and_
 
@@ -93,7 +91,7 @@ class GameAccessor(BaseAccessor):
         return res
 
 
-    @errors_catching_async
+
     async def create_game_in_db(self, game: Game):
         """Создает в базе данных объекты игры
 
@@ -123,7 +121,7 @@ class GameAccessor(BaseAccessor):
         else:
             return STARTED_GAME_HELP
                
-    @errors_catching_async
+
     async def start_game(self, chat_id: int, users: Dict[int, User]) -> str:
         game = self.app.games.get(chat_id)
         if game != None:
@@ -150,7 +148,7 @@ class GameAccessor(BaseAccessor):
         else:
             return res
 
-    @errors_catching_async
+
     async def restore_games_on_startup(self) -> Union[list, str]:
         created_games = []
         SecuritesModelAls = SecuritesModel.alias()
@@ -210,15 +208,13 @@ class GameAccessor(BaseAccessor):
             
         return created_games
 
-    @errors_catching_async
-    async def buy_securyties(self, chat_id: int, user_id: int, mess_text: str):
-        answ = check_operation(self.app, chat_id, user_id, mess_text)
-        if type(answ) != dict:
-            return answ
-        game: Game = answ["game"]
-        user: User = answ["user"]
-        security: Security = answ["secur"]
-        ammount: int = answ["ammount"]
+
+    async def buy_securyties(self, params: dict):
+
+        game: Game = params["game"]
+        user: User = params["user"]
+        security: Security = params["secur"]
+        ammount: int = params["ammount"]
         #Выполняем операцию покупки
         buyed_sequrity = user.buyed_securites.get(security.id)
         if buyed_sequrity == None:
@@ -228,7 +224,7 @@ class GameAccessor(BaseAccessor):
         user.points -= security.price*ammount
         async with db.transaction():
             db_t_round = await TradeRoundsModel.query.where(and_(TradeRoundsModel.game_id == game.id, TradeRoundsModel.number_in_game == game.trade_round)).gino.first()  
-            await TradeJornalModel.create(round_id=db_t_round.id, user_id=user_id, sequrity_id=security.id, operation="buy", ammount=ammount)
+            await TradeJornalModel.create(round_id=db_t_round.id, user_id=user.vk_id, sequrity_id=security.id, operation="buy", ammount=ammount)
            
             db_game_user = await(
                 insert(GameUsersModel)
@@ -252,20 +248,15 @@ class GameAccessor(BaseAccessor):
                     index_elements=[BuyedSecuritesModel.user_in_game_id, BuyedSecuritesModel.security_id], set_=dict(ammount=buyed_sequrity.ammount))
                 .returning(*BuyedSecuritesModel).gino.status()  
             )
-                
-
+ 
         return f"Удачная покупка. Остаток {user.points} монет"
 
+    async def sell_securyties(self, params: dict):
 
-    @errors_catching_async
-    async def sell_securyties(self, chat_id: int, user_id: int, mess_text: str):
-        answ = check_operation(self.app, chat_id, user_id, mess_text)
-        if type(answ) != dict:
-            return answ
-        game: Game = answ["game"]
-        user: User = answ["user"]
-        buyed_sequrity: BuyedSecurity = answ["secur"]
-        ammount:int = answ["ammount"]
+        game: Game = params["game"]
+        user: User = params["user"]
+        buyed_sequrity: BuyedSecurity = params["secur"]
+        ammount:int = params["ammount"]
         #Выполняем операцию продажи
         security = buyed_sequrity.security
 
@@ -273,7 +264,7 @@ class GameAccessor(BaseAccessor):
         user.points += security.price*ammount
         async with db.transaction():
             db_t_round = await TradeRoundsModel.query.where(and_(TradeRoundsModel.game_id == game.id, TradeRoundsModel.number_in_game == game.trade_round)).gino.first()  
-            await TradeJornalModel.create(round_id=db_t_round.id, user_id=user_id, sequrity_id=security.id, operation="sell", ammount=ammount)
+            await TradeJornalModel.create(round_id=db_t_round.id, user_id=user.vk_id, sequrity_id=security.id, operation="sell", ammount=ammount)
            
             db_game_user = await(insert(GameUsersModel)
                 .values(
@@ -295,33 +286,29 @@ class GameAccessor(BaseAccessor):
                 .returning(*BuyedSecuritesModel)
                 .gino.status()
             )
-                       
-        
 
         return f"Удачная продажа. Остаток {user.points} монет"
     
     
-    @errors_catching_async
-    async def finish_round_for_user(self, chat_id: int, user_id: int, mess_text: str):
-        answ = check_operation(self.app, chat_id, user_id, mess_text)
-        if type(answ) != dict:
-            return answ
-        game: Game = answ["game"]
-        user: User = answ["user"]
+
+    async def finish_round_for_user(self, params: dict):
+
+        game: Game = params["game"]
+        user: User = params["user"]
 
         #Выполняем операцию завершения торгов пользователя
 
         user.state = "finished"
         async with db.transaction():
-            db_game_user = await(insert(GameUsersModel)
+            await(insert(GameUsersModel)
                 .values(
                     game_id = game.id, 
                     user_id = user.vk_id, 
                     points = user.points, 
                     state = "finished")
-                .on_conflict_do_update(index_elements=[GameUsersModel.game_id, GameUsersModel.user_id], set_=dict(state =  "finished"))
+                .on_conflict_do_update(index_elements=[GameUsersModel.game_id, GameUsersModel.user_id], set_=dict(state = "finished"))
             .returning(*GameUsersModel)
-            .gino.first() 
+            .gino.status() 
             )          
         
         
@@ -337,7 +324,7 @@ class GameAccessor(BaseAccessor):
         
         return res
 
-    @errors_catching
+
     def get_info(self, chat_id: int):
         game = self.app.games.get(chat_id)
         if game == None:
@@ -346,7 +333,7 @@ class GameAccessor(BaseAccessor):
         text = generate_game_result(game)
         return text
 
-    @errors_catching_async
+
     async def stop_game(self, chat_id: int):
         game = self.app.games.get(chat_id)
         if game == None:

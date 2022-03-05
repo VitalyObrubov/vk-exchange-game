@@ -8,6 +8,6 @@ from freezegun import freeze_time
 from gino import GinoEngine
 
 @pytest.fixture
-async def mock_response():
-    with aioresponses(passthrough=["http://127.0.0.1"]) as responses_mock:
-        yield responses_mock
+async def vk_connected(cli):
+    await cli.app.store.vk_api.connect(cli.app)
+    return
