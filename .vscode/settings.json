@@ -4,5 +4,11 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+
+    "editor.occurrencesHighlight": false, // отключает обведение слова в рамку при постановке в него курсора
+    "workbench.colorCustomizations": {
+        "editor.selectionBackground": "#5555fcb0", // Текущий выделенный текст
+        "editor.selectionHighlightBackground": "#00000000", // тот же контент, что и выделение
+    }
 }

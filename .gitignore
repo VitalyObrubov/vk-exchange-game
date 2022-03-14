@@ -130,3 +130,6 @@ dmypy.json
 
 #User  definde
 to_do.txt
+tmp.txt
+settings.json
+.vscode/settings.json

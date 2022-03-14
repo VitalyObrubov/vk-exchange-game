@@ -1,4 +1,3 @@
-from http.client import NOT_FOUND
 from app.game.models import Game, User, Security
 
 

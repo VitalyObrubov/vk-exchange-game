@@ -149,6 +149,8 @@ class GameAccessor(BaseAccessor):
             return res
 
 
+
+
     async def restore_games_on_startup(self) -> Union[list, str]:
         created_games = []
         SecuritesModelAls = SecuritesModel.alias()
@@ -161,7 +163,8 @@ class GameAccessor(BaseAccessor):
             .outerjoin(TradeRoundsModel,  GameModel.id == TradeRoundsModel.game_id)
             .outerjoin(TradedSecuritesModel, TradeRoundsModel.id == TradedSecuritesModel.round_id)
             .outerjoin(SecuritesModelAls, TradedSecuritesModel.sequrity_id == SecuritesModelAls.id)
-            .outerjoin(MarketEventsModel, TradedSecuritesModel.market_event_id == MarketEventsModel.id)            .select()
+            .outerjoin(MarketEventsModel, TradedSecuritesModel.market_event_id == MarketEventsModel.id)
+            .select()
             .where(and_(GameModel.state == "started", TradeRoundsModel.state == "started"))
             .order_by(GameModel.id, GameUsersModel.id) 
             .gino.load(
@@ -204,10 +207,10 @@ class GameAccessor(BaseAccessor):
                 tr_secur.price = db_tr_secur.price
                 tr_secur.market_event = f"{db_tr_secur.market_event.description} цена изменилась на {db_tr_secur.market_event.diff}%"
             self.app.games[game.chat_id] = game
-            created_games.append(game)
-            
+            created_games.append(game)            
         return created_games
 
+        
 
     async def buy_securyties(self, params: dict):
 

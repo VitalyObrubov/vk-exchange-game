@@ -1,4 +1,5 @@
 from app.game.models import Game, User
+#from app.game.views import tst_list
 from tests.utils import ok_response
 from app.store import Store
 import pytest
@@ -79,14 +80,11 @@ pld = json.loads("""
 
 class TestVkApi:
     async def test_get_users(self, store: Store, chat_id, mock_response, vk_connected):
- 
-        path = re.compile(r"^https://api.vk.com/method/messages.getConversationMembers\.*")
+
+        path = re.compile(r"https://api.vk.com/method/messages.getConversationMembers\.*")
         mock_response.post(path,
                         status = 200,
                         payload = pld)
         answ =  await store.vk_api.get_users(chat_id)
         assert type(answ) == dict
         assert len(answ) == 3
-
-    
- 

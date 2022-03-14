@@ -9,7 +9,7 @@ class Security:
     id: str
     description: str
     price: int
-    market_event: Optional[str] #причина изменения цены и процент изменения
+    market_event: Optional[str]
 
 @dataclass
 class BuyedSecurity:

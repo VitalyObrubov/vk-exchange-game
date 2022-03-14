@@ -95,3 +95,11 @@ class TestGame:
         game = cli.app.games.get(chat_id) #получаем игру из памяти
 
         assert game != None
+
+
+
+    async def test_get_list(self):
+        from app.game.views import GameListView
+
+        answ = await GameListView.get()
+        assert len(answ) >= 3
