@@ -123,22 +123,18 @@ class VkApiAccessor(BaseAccessor):
             data = await resp.json()
             self.logger.info(data)
 
-    # запрашивает с сервера вк данные пользователей чата и формирует список объектов User
-    # не понимаю зачем здесь проверять правильность ответа все ошибки ловятся при отладке
-    # и могут возникнуть только если изменится протокол вк, а значит придется переписывть код
+
     async def get_users(self, chat_id) -> List[User]:
-        async with self.session.post(
-            self._build_query(
+        qry = self._build_query(
                 host=API_PATH,
                 method="messages.getConversationMembers",
                 params={
                     "peer_id": chat_id,
                     "fields":"first_name, last_name",
                     "access_token": self.app.config.bot.token,
-                },
-            )
-        ) as resp:
-            users = []
+                })
+        async with self.session.post(qry) as resp:
+            users = {}
             if resp.status != 200:
                 self.logger.error(f"Запрос списка пользователей не удался resp.status = {resp.status}")
                 return users
@@ -151,11 +147,13 @@ class VkApiAccessor(BaseAccessor):
 
             self.logger.info(profiles)
             for raw_user in profiles:
-                user = User(vk_id=raw_user["id"], 
-                            name=f'{raw_user["first_name"]} {raw_user["last_name"]}', 
-                            create_at=datetime.utcnow(),
-                            points = 10000,
-                            buyed_securites=[])
-                users.append(user)
+                user = User(
+                    vk_id=raw_user["id"],
+                    name=f'{raw_user["first_name"]} {raw_user["last_name"]}', 
+                    create_at=datetime.utcnow(),
+                    points = 10000,
+                    buyed_securites={},
+                    state = "in_trade")
+                users[user.vk_id] = user
             return users
            
