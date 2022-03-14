@@ -32,6 +32,6 @@ class Game(Schema):
     traded_sequrites = fields.Dict(keys=fields.Str(),values=fields.Nested(Security))
     
 
-class ListGameSchema(Schema):
+class ListOfGames(Schema):
     game = fields.Dict(keys=fields.Str(),values=fields.Nested(Game))
 

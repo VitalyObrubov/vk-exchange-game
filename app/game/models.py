@@ -50,6 +50,14 @@ class SecuritesModel(db.Model):
     description = db.Column(db.Unicode,nullable = False)
     start_price = db.Column(db.Integer())
 
+    def get_secur(self) -> User:
+        secur = Security(
+            id=self.id,
+            description=self.description, 
+            price=self.start_price,
+            market_event="Пока нет событий")        
+        return secur
+
 class GameModel(db.Model):
     __tablename__ = "games"
     id = db.Column(db.Integer(), primary_key=True)

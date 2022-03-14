@@ -151,8 +151,7 @@ class GameAccessor(BaseAccessor):
 
 
 
-    async def restore_games_on_startup(self) -> Union[list, str]:
-        created_games = []
+    async def restore_games_on_startup(self, state = "started") -> Union[list, str]:
         SecuritesModelAls = SecuritesModel.alias()
         db_games = (
             await GameModel
@@ -165,7 +164,7 @@ class GameAccessor(BaseAccessor):
             .outerjoin(SecuritesModelAls, TradedSecuritesModel.sequrity_id == SecuritesModelAls.id)
             .outerjoin(MarketEventsModel, TradedSecuritesModel.market_event_id == MarketEventsModel.id)
             .select()
-            .where(and_(GameModel.state == "started", TradeRoundsModel.state == "started"))
+            .where(and_(GameModel.state == state, TradeRoundsModel.state == state))
             .order_by(GameModel.id, GameUsersModel.id) 
             .gino.load(
                 GameModel.distinct(GameModel.id)
@@ -191,6 +190,8 @@ class GameAccessor(BaseAccessor):
             )
             .all()
         )
+
+        created_games = {}
         for db_game in db_games:
             game = db_game.get_game()
             await self.create_traded_sequrites(game)
@@ -207,7 +208,7 @@ class GameAccessor(BaseAccessor):
                 tr_secur.price = db_tr_secur.price
                 tr_secur.market_event = f"{db_tr_secur.market_event.description} цена изменилась на {db_tr_secur.market_event.diff}%"
             self.app.games[game.chat_id] = game
-            created_games.append(game)            
+            created_games[game.chat_id] = game            
         return created_games
 
         
@@ -349,4 +350,11 @@ class GameAccessor(BaseAccessor):
         self.app.games.pop(chat_id, None)
         return "Завершена игра<br>" + generate_game_result(game)
 
- 
+    async def get_secur_by_id(self, id: str):
+        db_secur = await SecuritesModel.query.where(SecuritesModel.id==id).gino.first()
+        return db_secur
+
+    async def create_secur(self, id: str, description: str, price: int ):
+        db_secur:SecuritesModel = await SecuritesModel.create(id=id, description=description, start_price=price)
+        secur = db_secur.get_secur()
+        return secur

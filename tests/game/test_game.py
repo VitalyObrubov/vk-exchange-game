@@ -1,8 +1,4 @@
-from sqlalchemy import true
-from datetime import datetime
-import pytest
-from asyncpg.exceptions import UniqueViolationError
-from sqlalchemy import and_
+from sqlalchemy import and_, true
 
 from app.game.models import (
     Game,
@@ -97,9 +93,3 @@ class TestGame:
         assert game != None
 
 
-
-    async def test_get_list(self):
-        from app.game.views import GameListView
-
-        answ = await GameListView.get()
-        assert len(answ) >= 3
