@@ -1,8 +1,8 @@
 """next migration
 
-Revision ID: 05a9326ce4ea
+Revision ID: 8068a57390fd
 Revises: 
-Create Date: 2022-02-28 14:06:49.914791
+Create Date: 2022-03-03 19:08:54.508486
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from sqlalchemy.sql import table, column
 from sqlalchemy import String, Integer, Date, Unicode
 
 # revision identifiers, used by Alembic.
-revision = '05a9326ce4ea'
+revision = '8068a57390fd'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -49,9 +49,11 @@ def upgrade():
     sa.Column('game_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('points', sa.Integer(), nullable=False),
+    sa.Column('state', sa.String(length=10), nullable=False),
     sa.ForeignKeyConstraint(['game_id'], ['games.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.vk_id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('game_id', 'user_id', name='unc_game_user')
     )
     op.create_table('trade_rounds',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -59,7 +61,8 @@ def upgrade():
     sa.Column('state', sa.String(length=30), nullable=False),
     sa.Column('game_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['game_id'], ['games.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('number_in_game', 'game_id', name='unc_game_num_in_game')
     )
     op.create_table('buyed_securites',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -68,7 +71,8 @@ def upgrade():
     sa.Column('ammount', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['security_id'], ['securites.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_in_game_id'], ['game_users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_in_game_id', 'security_id', name='unc_user_secur')
     )
     op.create_table('trade_jornal',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -89,7 +93,8 @@ def upgrade():
     sa.Column('market_event_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['market_event_id'], ['market_events.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['round_id'], ['trade_rounds.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['sequrity_id'], ['securites.id'], ondelete='CASCADE')
+    sa.ForeignKeyConstraint(['sequrity_id'], ['securites.id'], ondelete='CASCADE'),
+    sa.UniqueConstraint('sequrity_id', 'round_id', name='unc_secur_round')
     )
     # ### end Alembic commands ###
     accounts_table = table('market_events',

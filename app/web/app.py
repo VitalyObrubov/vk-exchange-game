@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, Dict
 
 from aiohttp.web import (
     Application as AiohttpApplication,
@@ -23,7 +23,7 @@ class Application(AiohttpApplication):
     config: Optional[Config] = None
     store: Optional[Store] = None
     database: Optional[Database] = None
-
+    games: Dict[int, Game] = {}#здесь хранятся текущие игры из разных чатов
 
 class Request(AiohttpRequest):
     #admin: Optional[Admin] = None
@@ -60,5 +60,6 @@ def setup_app(config_path: str) -> Application:
     )
     setup_middlewares(app)
     setup_store(app)
-    app.games = [] #здесь хранятся текущие игры из разных чатов
+
     return app
+book_authors: Dict[str, str] = {"Fahrenheit 451": "Bradbury"}
