@@ -35,6 +35,7 @@ class Game:
     trade_round: int
     users: Dict[int, User] 
     traded_sequrites: Dict[str, Security]
+    dead_time_count: int = 0
 
 #===================================================================================================================================
 
