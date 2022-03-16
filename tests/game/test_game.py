@@ -1,8 +1,4 @@
-from sqlalchemy import true
-from datetime import datetime
-import pytest
-from asyncpg.exceptions import UniqueViolationError
-from sqlalchemy import and_
+from sqlalchemy import and_, true
 
 from app.game.models import (
     Game,
@@ -95,3 +91,5 @@ class TestGame:
         game = cli.app.games.get(chat_id) #получаем игру из памяти
 
         assert game != None
+
+

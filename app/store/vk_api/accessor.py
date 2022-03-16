@@ -36,10 +36,11 @@ class VkApiAccessor(BaseAccessor):
         await self.poller.start()
 
     async def disconnect(self, app: "Application"):
-        if self.session:
-            await self.session.close()
-        if self.poller:
-            await self.poller.stop()
+        #if self.session:
+            #await self.session.close()
+        #if self.poller:
+            #await self.poller.stop()
+        return
 
     @staticmethod
     def _build_query(host: str, method: str, params: dict) -> str:
@@ -76,7 +77,7 @@ class VkApiAccessor(BaseAccessor):
                     "act": "a_check",
                     "key": self.key,
                     "ts": self.ts,
-                    "wait": 5,
+                    "wait": 30,
                 },
             )
         ) as resp:

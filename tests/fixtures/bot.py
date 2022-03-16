@@ -32,18 +32,18 @@ def updates(cli):
             ),
         )
     )    
-    upds.append(
-        Update(
-            type="new_message",
-            object=UpdateObject(
-                id=1,
-                user_id=10001,
-                peer_id=10001,
-                text="/start_game",
-                action=None                
-            ),
-        )
-    )    
+    # upds.append(
+    #     Update(
+    #         type="new_message",
+    #         object=UpdateObject(
+    #             id=1,
+    #             user_id=10001,
+    #             peer_id=10001,
+    #             text="/start_game",
+    #             action=None                
+    #         ),
+    #     )
+    # )    
     upds.append(
         Update(
             type="new_message",

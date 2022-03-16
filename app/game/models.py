@@ -9,7 +9,7 @@ class Security:
     id: str
     description: str
     price: int
-    market_event: Optional[str] #причина изменения цены и процент изменения
+    market_event: Optional[str]
 
 @dataclass
 class BuyedSecurity:
@@ -35,6 +35,7 @@ class Game:
     trade_round: int
     users: Dict[int, User] 
     traded_sequrites: Dict[str, Security]
+    dead_time_count: int = 0
 
 #===================================================================================================================================
 
@@ -49,6 +50,14 @@ class SecuritesModel(db.Model):
     id = db.Column(db.String(10), primary_key=True)
     description = db.Column(db.Unicode,nullable = False)
     start_price = db.Column(db.Integer())
+
+    def get_secur(self) -> User:
+        secur = Security(
+            id=self.id,
+            description=self.description, 
+            price=self.start_price,
+            market_event="Пока нет событий")        
+        return secur
 
 class GameModel(db.Model):
     __tablename__ = "games"
