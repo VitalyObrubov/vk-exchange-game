@@ -51,6 +51,7 @@ class Poller:
     async def stop(self):
         self.is_running = False
         await self.poll_task
+        await self.dead_line_task
         await self.queue.join()
         # Cancel our worker tasks.
         for task in self.tasks:
