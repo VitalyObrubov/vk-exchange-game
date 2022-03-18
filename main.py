@@ -3,5 +3,6 @@ import os
 from app.web.app import setup_app
 from aiohttp.web import run_app
 print("start app")
+env_port = os.environ.get('PORT')
 if __name__ == "__main__":
-    run_app(setup_app(config_path=os.path.join(os.path.dirname(__file__), 'config.yml')))
+    run_app(setup_app(config_path=os.path.join(os.path.dirname(__file__), 'config.yml')), port=env_port)

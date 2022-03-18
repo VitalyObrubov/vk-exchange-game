@@ -5,11 +5,11 @@ admin:
   email: admin@admin.com
   password: admin
 database:
-  host: 0.0.0.0
+  host: ec2-34-224-226-38.compute-1.amazonaws.com
   port: 5432
-  user: postgres
-  password: postgres
-  database: exchange
+  user: mopxgxoswjmoea
+  password: a56792466c981053c9d6465bb951a32f8b32496f0c4b019865c93a881f785ca2
+  database: d15jpu7knc35se
 bot:
   #token: e66acb5215d5193d4a18b5840a4ad8ed1e00f0508e921997c9a73029b25912ec9728875922fc8f26fd2e8
   token: 166356d6d5e459f4c85697a56225b4a6c8376cf617421b9b0b4383d14537b0ac824c3c7b473ba60dc32c4
