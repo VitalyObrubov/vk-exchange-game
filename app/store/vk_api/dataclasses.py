@@ -9,6 +9,7 @@ class UpdateObject:
     peer_id: int
     text: str
     action: Optional[str]
+    payload: Optional[str]
 
 
 @dataclass

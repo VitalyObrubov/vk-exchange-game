@@ -16,6 +16,7 @@ def updates(cli):
                 user_id=10001,
                 peer_id=10001,
                 text="",
+                payload= "",
                 action="chat_invite_user"                
             ),
         )
@@ -28,6 +29,7 @@ def updates(cli):
                 user_id=10001,
                 peer_id=10001,
                 text="/help",
+                payload= "",
                 action=None                
             ),
         )
@@ -40,6 +42,7 @@ def updates(cli):
     #             user_id=10001,
     #             peer_id=10001,
     #             text="/start_game",
+    #             payload= "",
     #             action=None                
     #         ),
     #     )
@@ -52,6 +55,7 @@ def updates(cli):
                 user_id=10001,
                 peer_id=10001,
                 text="/buy AFLT 10",
+                payload= "",
                 action=None                
             ),
         )
@@ -64,6 +68,7 @@ def updates(cli):
                 user_id=10001,
                 peer_id=10001,
                 text="/sell AFLT 5",
+                payload= "",
                 action=None                
             ),
         )
@@ -76,6 +81,7 @@ def updates(cli):
                 user_id=10001,
                 peer_id=10001,
                 text="/finish",
+                payload= "",
                 action=None                
             ),
         )
@@ -88,6 +94,7 @@ def updates(cli):
                 user_id=10001,
                 peer_id=10001,
                 text="",
+                payload= "",
                 action=None                
             ),
         )
@@ -100,6 +107,7 @@ def updates(cli):
                 user_id=10001,
                 peer_id=10001,
                 text="/info",
+                payload= "",
                 action=None                
             ),
         )
@@ -112,6 +120,7 @@ def updates(cli):
                 user_id=10001,
                 peer_id=10001,
                 text="/stop_game",
+                payload= "",
                 action=None                
             ),
         )

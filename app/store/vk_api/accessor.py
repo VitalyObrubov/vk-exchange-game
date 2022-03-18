@@ -1,5 +1,6 @@
 import random
 import typing
+import json
 from typing import Optional, List
 
 from aiohttp import TCPConnector
@@ -9,6 +10,7 @@ from app.base.base_accessor import BaseAccessor
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
 from app.store.vk_api.poller import Poller
 from app.game.models import User
+from app.store.vk_api.keyboard import START_KEY, RUN_KEY
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -99,6 +101,7 @@ class VkApiAccessor(BaseAccessor):
                             peer_id=update["object"]["message"]["peer_id"],
                             text=update["object"]["message"]["text"],
                             action=action,
+                            payload = update["object"]["message"].get('payload')
                             
                         ),
                     )
@@ -107,17 +110,23 @@ class VkApiAccessor(BaseAccessor):
             #await self.app.store.bots_manager.handle_updates(updates)
 
     async def send_message(self, message: Message) -> None:
+        game = self.app.games.get(message.peer_id)
+        if game == None:
+            knobs =  START_KEY
+        else:
+            knobs =  RUN_KEY
+        keyboard = json.dumps(knobs, ensure_ascii=False).encode('utf-8')
+        keyboard = str(keyboard.decode('utf-8'))
         async with self.session.get(
             self._build_query(
                 API_PATH,
                 "messages.send",
                 params={
-                    #"user_id": message.user_id,
                     "random_id": random.randint(1, 2 ** 32),
-                    #"peer_id": "-" + str(self.app.config.bot.group_id),
                     "peer_id":message.peer_id,
                     "message": message.text,
                     "access_token": self.app.config.bot.token,
+                    "keyboard": keyboard,
                 },
             )
         ) as resp:

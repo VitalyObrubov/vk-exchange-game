@@ -65,41 +65,44 @@ class BotManager:
     async def handle_updates(self, updates: list[Update]):
         for update in updates:
             chat_id=int(update.object.peer_id)
+            if update.object.payload == None:
+                update.object.payload = ""
             if update.object.action == "chat_invite_user":
                 message_text = INVITE_MEESGE
 
-            elif update.object.text.startswith("/start_game"):
+            elif update.object.text.startswith("/start_game") or update.object.payload.find("/start_game") > -1:
+
                 users = await self.app.store.vk_api.get_users(chat_id) 
                 message_text = await self.app.store.games.start_game(chat_id, users)
  
-            elif update.object.text.startswith("/help"):
+            elif update.object.text.startswith("/help") or update.object.payload.find("/help") > -1:
                 message_text = self.app.store.games.get_help(chat_id)            
             
-            elif update.object.text.startswith("/buy"):
+            elif update.object.text.startswith("/buy") or update.object.payload.find("/buy") > -1:
                 params = self.split_mess(chat_id, update.object.user_id, update.object.text)
                 if type(params) != dict:
                     message_text = params
                 else:
                     message_text = await self.app.store.games.buy_securyties(params)            
             
-            elif update.object.text.startswith("/sell"):
+            elif update.object.text.startswith("/sell") or update.object.payload.find("/sell") > -1:
                 params = self.split_mess(chat_id,  update.object.user_id, update.object.text)
                 if type(params) != dict:
                     message_text = params
                 else:
                     message_text =  await self.app.store.games.sell_securyties(params)            
             
-            elif update.object.text.startswith("/finish"):
-                params = self.split_mess(chat_id,  update.object.user_id, update.object.text)
+            elif update.object.text.startswith("/finish") or update.object.payload.find("/finish") > -1:
+                params = self.split_mess(chat_id,  update.object.user_id, "/finish")
                 if type(params) != dict:
                     message_text = params
                 else:
                     message_text =  await self.app.store.games.finish_round_for_user(params)                      
 
-            elif update.object.text.startswith("/info"):
+            elif update.object.text.startswith("/info") or update.object.payload.find("/info") > -1:
                 message_text = self.app.store.games.get_info(chat_id)            
            
-            elif update.object.text.startswith("/stop_game"):
+            elif update.object.text.startswith("/stop_game") or update.object.payload.find("/stop_game") > -1:
                 message_text = await self.app.store.games.stop_game(chat_id)            
            
             else:
