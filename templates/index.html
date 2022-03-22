@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru-RU">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    {% block title %}
+        <title>{{title}}</title>
+    {% endblock %}
+    <link rel="stylesheet" href="/static/css/uikit.min.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <script src="/static/js/uikit.min.js"></script>
+</head>
+<body>
+    <nav class="uk-navbar-container uk-margin" uk-navbar>
+        <div class="uk-navbar-left">
+            <a class="uk-navbar-item uk-logo" href="/">Администрирование бота</a>
+            <ul class="uk-navbar-nav">
+                <li class = "uk-active"> <a href="/"> Главная страница </a> </li>
+                <li> <a href="admins"> Администраторы </a> </li>
+                <li> <a href="gamers"> Игроки </a> </li>
+                <li> <a href="securs"> Акции </a> </li>
+                <li> <a href="games"> Игры </a> </li>
+            </ul>
+        </div>
+        <div class="uk-navbar-right content">
+             
+            <ul class="uk-navbar-nav">
+                <li class = "uk-active"> <a href="login"> {{adm}} </a> </li>
+            </ul>
+        </div>
+    </nav>
+    {% block content %}
+    {% endblock %}
+</body>
+</html>

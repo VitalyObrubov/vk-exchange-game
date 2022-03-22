@@ -9,6 +9,9 @@ from aiohttp_apispec import setup_aiohttp_apispec
 from aiohttp_session import setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
+import jinja2  # шаблонизатор jinja2
+import aiohttp_jinja2  # адаптация jinja2 к aiohttp
+
 #from app.admin.models import Admin
 from app.game.models import Game
 from app.store import setup_store, Store
@@ -49,6 +52,9 @@ class View(AiohttpView):
 
 app = Application()
 
+def setup_external_libraries() -> None:
+   # указываем шаблонизатору, что html-шаблоны надо искать в папке templates
+   aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader("templates"))
 
 def setup_app(config_path: str) -> Application:
     setup_logging(app)
@@ -60,6 +66,6 @@ def setup_app(config_path: str) -> Application:
     )
     setup_middlewares(app)
     setup_store(app)
+    setup_external_libraries()
 
     return app
-book_authors: Dict[str, str] = {"Fahrenheit 451": "Bradbury"}

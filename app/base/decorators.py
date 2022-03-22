@@ -1,6 +1,7 @@
 from logging import getLogger
 import functools
 from aiohttp.web_exceptions import HTTPUnauthorized
+from aiohttp import web
 
 def errors_catching(func):
     @functools.wraps(func)
@@ -30,5 +31,16 @@ def require_auth(func):
         if "user_id" not in self.request:
             raise HTTPUnauthorized
         return await func(self, *args, **kwargs)
-
     return require_auth_wrap
+
+def login_required (func): # Проверка статуса входа пользователя
+    """This function applies only to class views."""
+    @functools.wraps(func)
+    async def inner(self, *args, **kwargs):
+        try:
+            adm = self.request.admin.email
+            return await func(self,*args, **kwargs)            
+        except Exception as e:
+            print(e)
+            return web.Response(status=302, headers={'location': '/login'}) 
+    return inner

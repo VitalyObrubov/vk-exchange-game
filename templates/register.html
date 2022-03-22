@@ -1,0 +1,33 @@
+{% extends "index.html" %}
+ 
+{% block title %}
+         <title> Регистрация </title>
+{% endblock %}
+ 
+{% block content %}
+    <div class="uk-container content">
+        <form class="uk-form register-box">
+            <fieldset style="width: 30%">
+                                 <legend> Зарегистрировать аккаунт </ legend>
+                <div class="uk-form-row">
+                                         <span class = "uk-form-label"> Псевдоним </ span>
+                                         <input type = "text" name = "name" placeholder = "Пожалуйста, введите ваше имя" class = "uk-form-width-medium uk-form-small">
+                </div>
+                <div class="uk-form-row">
+                    <span class = "uk-form-label"> Почтовый ящик </ span>
+                                         <input type = "text" name = "email" placeholder = "Пожалуйста, введите свой адрес электронной почты" class = "uk-form-width-medium uk-form-small">
+                </div>
+                <div class="uk-form-row">
+                                         <span class = "uk-form-label"> Мобильный телефон </ span>
+                                         <input type = "text" name = "phone" placeholder = "Пожалуйста, введите свой номер телефона" class = "uk-form-width-medium uk-form-small">
+                </div>
+                <div class="uk-form-row">
+                                         <span class = "uk-form-label"> Пароль </ span>
+                                         <input type = "password" name = "password" placeholder = "Пожалуйста, введите ваш пароль" class = "uk-form-width-medium uk-form-small">
+                </div>
+                                 <button type = "submit" class = "uk-button-primary"> Отправить </ button>
+            </fieldset>
+        </form>
+    </div>
+{% endblock %}
+ 
