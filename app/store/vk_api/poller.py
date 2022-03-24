@@ -30,7 +30,7 @@ class Poller:
             while len(games_for_del) > 0:
                 game = games_for_del.pop()
                 message_text = await app.store.games.stop_game(game.chat_id)
-                message_text += "<br>Игра завершена по тймауту"
+                message_text += "<br>Игра завершена по таймауту"
                 await app.store.vk_api.send_message(
                     Message(
                         user_id=111111,

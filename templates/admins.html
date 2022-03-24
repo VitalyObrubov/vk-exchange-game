@@ -1,59 +1,74 @@
 {% extends "index.html" %}
- 
+
 {% block title %}
-    <title> Администраторы </title>
+<title> Администраторы </title>
 
 {% endblock %}
- 
+
 {% block head_js %}
 
 {% endblock %}
- 
+
 {% block content %}
 
-        <form class="uk-form register-box" method="post"  action="{{ url('AdminListView') }}" style="margin-top: 2rem;">
-            <fieldset data-uk-margin>
-                <input type = "text" name = "email" placeholder = "Пожалуйста, введите адрес электронной почты" class = "uk-width-1-5 uk-form-small">
-                <input type = "password" name = "password" placeholder = "Пожалуйста, введите ваш пароль" class = "uk-width-1-5 uk-form-small">
-                <button type = "submit" class = "uk-width-1-5 uk-button-primary uk-button-small"> Создать </button>
-            </fieldset> 
-            {% if msg %}
-                <p class="uk-text-danger">{{ msg.error_msg }}</p>
-            {% endif %}
+<form class="uk-form register-box" method="post" action="{{ url('AdminListView') }}" style="margin-top: 2rem;">
+    <fieldset data-uk-margin>
+        <input type="text" name="email" placeholder="e-mail" class="uk-width-1-5 uk-form-small">
+        <input type="password" name="password" placeholder="пароль" class="uk-width-1-5 uk-form-small">
+        <button type="submit" class="uk-width-1-5 uk-button-primary uk-button-small"> Создать </button>
+    </fieldset>
+    {% if msg %}
+    <p class="uk-text-danger">{{ msg.error_msg }}</p>
+    {% endif %}
 
-        </form>
+</form>
 
- <!--      
+<form class="uk-form register-box" method="post" style="margin-top: 2rem;">
     <div class="uk-container content">
-        <table class="uk-table">
+        <table class="uk-table" width=50%>
             <caption>Администраторы</caption>
             <thead>
                 <tr>
-                    <th>Ид</th>
+                    <th>№</th>
                     <th>e-mail</th>
-                    <th>password</th>
-                    <th>Сменить пароль</th>
                     <th>Удалить</th>
                 </tr>
             </thead>
-            <tbody>
-            {% for admin in admins %}
+            <tbody id="admins_tabel">
+                {% for admin in admins %}
                 <tr>
-                    <td><a {{ admin.id }} name = "id_ln" ></td>
-                    <td><a {{ admin.email }} name = "email_ln" ></a></td>
-                    <td><input type = "password" name = "password_ln" placeholder = "Новый пароль"></td>
-                    <td><a class="uk-button uk-button-primary" href="#">Обновить</a></td>
-                    <td><a class="uk-button uk-button-primary" href="#">Удалить</a></td>
-                </tr>    
+                    <td><input type="text" name="id_ln" value={{ admin.id }} readonly></td>
+                    <td><input type="text" name="email_ln" value={{ admin.email }} readonly></td>
+                    <td><a class="uk-button uk-button-primary" type="submit" onclick="delAdmin('{{ admin.email }}')">Удалить</a></td>
+                </tr>
 
-            {% endfor %}
+                {% endfor %}
             </tbody>
         </table>
     </div>
--->
+
+</form>
+
+<script>
+
+    function delAdmin(email) {
+        fetch("/admins.del", {
+            "method": "POST",
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            },
+            "body": JSON.stringify({
+                "email": email,
+            })
+        })
+        location.reload();
+
+    }
+
+</script>
+
 {% endblock %}
- 
+
 {% block bottom_js %}
- 
+
 {% endblock %}
- 

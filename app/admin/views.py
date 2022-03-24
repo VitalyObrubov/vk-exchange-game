@@ -6,6 +6,7 @@ from typing import Optional
 
 from app.admin.schemes import AdminSchema
 from app.admin.models import AdminModel
+from app.game.models import UserModel, SecuritesModel
 from app.web.app import View
 from aiohttp.web import HTTPForbidden, HTTPUnauthorized
 from app.web.utils import json_response
@@ -38,7 +39,11 @@ class AdminLoginView(View):
         return aiohttp_jinja2.render_template('login.html', self.request, locals())
 
     async def post(self):
-        email, password = self.data["email"], self.data["password"]
+
+        data = await self.request.post()
+        email = data.get('email')
+        password = data.get('password')
+
         admin = await self.store.admins.get_by_email(email)
         if not admin:
             msg = {'error_code': 20002, 'error_msg': 'Пользователь не найден'}
@@ -55,13 +60,6 @@ class AdminLoginView(View):
         return web.Response(status=302, headers={'location': '/'})
 
 
-class AdminCurrentView(View):
-    @login_required
-    @response_schema(AdminSchema, 200)
-    async def get(self):
-        if self.request.admin:
-            return json_response(data=AdminSchema().dump(self.request.admin))
-        raise HTTPUnauthorized
 
 
 class AdminListView(View):
@@ -72,25 +70,64 @@ class AdminListView(View):
         return aiohttp_jinja2.render_template('admins.html', self.request, locals())
 
     async def post(self):
-        email, password = self.data["email"], self.data["password"]
+
+        data = await self.request.post()
+        email = data.get('email')
+        password = data.get('password')
         admin = await self.store.admins.create_admin(email, password)
         
         if not admin:
             msg = {'error_code': 20002, 'error_msg': 'Пользователь не создан'}
             return aiohttp_jinja2.render_template('login.html', self.request, locals())
-        elif admin.is_password_valid(password):
+        elif not admin.is_password_valid(password):
             msg = {'error_code': 20004, 'error_msg': 'Неверный пароль'}
             return aiohttp_jinja2.render_template('login.html', self.request, locals())           
         return web.Response(status=302, headers={'location': '/admins'})
 
 
-class AdminAddView(View):
+class AdminDelView(View):
     @login_required
-    @aiohttp_jinja2.template('register.html')
+    @aiohttp_jinja2.template('index.html')
     async def get(self):
         return
 
+    async def post(self):
+        data = await self.request.json()
+        email = data.get('email')
+
+        await AdminModel.delete.where(AdminModel.email == email).gino.status()         
+        return web.Response(status=302, headers={'location': '/admins'})
 
 
 
+class GamersListView(View):
+    @login_required
+    async def get(self): 
+        adm = get_adm(self)   
+        users = await UserModel.query.order_by(UserModel.vk_id).gino.all()
+        return aiohttp_jinja2.render_template('gamers.html', self.request, locals())
+
+
+class SecursListView(View):
+    @login_required
+    async def get(self): 
+        adm = get_adm(self)   
+        securs = await SecuritesModel.query.order_by(SecuritesModel.id).gino.all()
+        return aiohttp_jinja2.render_template('sequrs.html', self.request, locals())
     
+    async def post(self):
+
+        data = await self.request.post()
+        id = data.get('id')
+        description = data.get('description')
+        start_price = data.get('start_price')
+        
+        sequr = await self.store.admins.create_admin(email, password)
+        
+        if not admin:
+            msg = {'error_code': 20002, 'error_msg': 'Пользователь не создан'}
+            return aiohttp_jinja2.render_template('login.html', self.request, locals())
+        elif not admin.is_password_valid(password):
+            msg = {'error_code': 20004, 'error_msg': 'Неверный пароль'}
+            return aiohttp_jinja2.render_template('login.html', self.request, locals())           
+        return web.Response(status=302, headers={'location': '/admins'})

@@ -1,22 +1,30 @@
-
-<form action="{{ url('AdminLoginView') }}" method="post">
-    <ul>
-      <li>
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="user_name">
-      </li>
-      <li>
-        <label for="mail">E-mail:</label>
-        <input type="text" id="mail" name="user_mail">
-      </li>
-      <li>
-        <label for="msg">Message:</label>
-        <textarea id="msg" name="user_message"></textarea>
-      </li>
-    </ul>
-    <li class="button">
-        <button type="submit">Send your message</button>
-    </li>
-  </form>
-
+{% extends "index.html" %}
+ 
+{% block title %}
+         <title> Войти </title>
+{% endblock %}
+ 
+{% block head_js %}
+{% endblock %}
+ 
+{% block content %}
+    <div class="uk-container content">
+        <form class="uk-form register-box uk-text-center" method="post" action="{{ url('AdminLoginView') }}" style="margin-top: 2rem;">
+            <div class="uk-form-row">
+              <input type = "text" name = "email" placeholder = "Пожалуйста, введите адрес электронной почты или номер мобильного телефона" class = "uk-width-1-5 uk-form-small">
+            </div>
+            <div class="uk-form-row">
+                <input type = "password" name = "password" placeholder = "Пожалуйста, введите ваш пароль" class = "uk-width-1-5 uk-form-small">
+            </div>
+            <button type = "submit" class = "uk-width-1-5 uk-button-primary uk-button-small"> Отправить </button>
+            {% if msg %}
+                <p class="uk-text-danger">{{ msg.error_msg }}</p>
+            {% endif %}
+        </form>
+    </div>
+{% endblock %}
+ 
+{% block bottom_js %}
+ 
+{% endblock %}
  

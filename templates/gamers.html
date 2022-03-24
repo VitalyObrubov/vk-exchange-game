@@ -1,0 +1,46 @@
+{% extends "index.html" %}
+
+{% block title %}
+<title> Игроки </title>
+
+{% endblock %}
+
+{% block head_js %}
+
+{% endblock %}
+
+{% block content %}
+
+
+<form class="uk-form register-box" method="post" style="margin-top: 2rem;">
+    <div class="uk-container content">
+        <table class="uk-table">
+            <caption>Игроки</caption>
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>Имя</th>
+                    <th>Создан</th>
+                </tr>
+            </thead>
+            <tbody id="admins_tabel">
+                {% for user in users %}
+                <tr>
+                    <td><input type="text" name="id_ln" value="{{ user.vk_id }}" readonly></td>
+                    <td><input type="text" name="name_ln" value="{{ user.name }}" readonly></td>
+                    <td><input type="text" name="date_ln" value="{{ user.create_at }}" readonly></td>
+                </tr>
+
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</form>
+
+
+{% endblock %}
+
+{% block bottom_js %}
+
+{% endblock %}
