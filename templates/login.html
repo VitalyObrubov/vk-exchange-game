@@ -9,7 +9,9 @@
  
 {% block content %}
     <div class="uk-container content">
-        <form class="uk-form register-box uk-text-center" method="post" action="{{ url('AdminLoginView') }}" style="margin-top: 2rem;">
+        
+        <form class="uk-form register-box uk-text-center" class="uk-form register-box uk-text-center" method="post" action="{{ url('AdminLoginView') }}" style="margin-top: 2rem;">
+            <h2 class="uk-text-center" >Авторизация</h2>
             <div class="uk-form-row">
               <input type = "text" name = "email" placeholder = "Пожалуйста, введите адрес электронной почты или номер мобильного телефона" class = "uk-width-1-5 uk-form-small">
             </div>

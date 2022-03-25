@@ -149,8 +149,6 @@ class GameAccessor(BaseAccessor):
             return res
 
 
-
-
     async def restore_games_on_startup(self, state = "started") -> Union[list, str]:
         SecuritesModelAls = SecuritesModel.alias()
         db_games = (

@@ -8,8 +8,6 @@ from app.admin.schemes import AdminSchema
 from app.admin.models import AdminModel
 from app.game.models import UserModel, SecuritesModel
 from app.web.app import View
-from aiohttp.web import HTTPForbidden, HTTPUnauthorized
-from app.web.utils import json_response
 from app.base.decorators import login_required
 
 
@@ -113,21 +111,28 @@ class SecursListView(View):
     async def get(self): 
         adm = get_adm(self)   
         securs = await SecuritesModel.query.order_by(SecuritesModel.id).gino.all()
-        return aiohttp_jinja2.render_template('sequrs.html', self.request, locals())
+                                               
+        return aiohttp_jinja2.render_template('securs.html', self.request, locals())
     
     async def post(self):
 
         data = await self.request.post()
         id = data.get('id')
         description = data.get('description')
-        start_price = data.get('start_price')
-        
-        sequr = await self.store.admins.create_admin(email, password)
-        
-        if not admin:
-            msg = {'error_code': 20002, 'error_msg': 'Пользователь не создан'}
-            return aiohttp_jinja2.render_template('login.html', self.request, locals())
-        elif not admin.is_password_valid(password):
-            msg = {'error_code': 20004, 'error_msg': 'Неверный пароль'}
-            return aiohttp_jinja2.render_template('login.html', self.request, locals())           
-        return web.Response(status=302, headers={'location': '/admins'})
+        start_price = int(data.get('start_price'))
+
+        existing_secur = await self.store.games.get_secur_by_id(id)
+        if existing_secur:
+            msg = {'error_code': 20002, 'error_msg': 'Акция уже существует'}
+            return aiohttp_jinja2.render_template('securs.html', self.request, locals())
+
+        secur = await self.store.games.create_secur(id, description, start_price)
+         
+        return web.Response(status=302, headers={'location': '/securs'})
+
+class GamesListView(View):
+    @login_required
+    async def get(self): 
+        adm = get_adm(self)   
+        games = await self.store.games.restore_games_on_startup("finished")
+        return aiohttp_jinja2.render_template('games.html', self.request, locals())

@@ -1,0 +1,46 @@
+{% extends "index.html" %}
+
+{% block title %}
+<title> Игрs </title>
+
+{% endblock %}
+
+{% block head_js %}
+
+{% endblock %}
+
+{% block content %}
+
+
+<form class="uk-form" method="post">
+    <div class="uk-container content">
+        <table class="uk-table">
+            <caption>Игры</caption>
+            <thead>
+                <tr>
+                    <th>Чат</th>
+                    <th>Создана</th>
+                    <th>Раунд</th>
+                </tr>
+            </thead>
+            <tbody id="games_tabel">
+                {% for game in games.values() %}
+                <tr>
+                    <td><input type="text" name="chat_id_ln" value="{{ game.chat_id }}" readonly></td>
+                    <td><input type="text" name="create_at_ln" value="{{ game.create_at }}" readonly></td>
+                    <td><input type="text" name="trade_round_ln" value="{{ game.trade_round }}" readonly></td>
+                </tr>
+
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</form>
+
+
+{% endblock %}
+
+{% block bottom_js %}
+
+{% endblock %}
