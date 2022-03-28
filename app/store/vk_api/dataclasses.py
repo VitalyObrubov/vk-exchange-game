@@ -8,8 +8,8 @@ class UpdateObject:
     user_id: int
     peer_id: int
     text: str
-    action: Optional[str]
     payload: Optional[str]
+    mess_id: Optional[str]
 
 
 @dataclass
@@ -23,3 +23,4 @@ class Message:
     user_id: int
     peer_id: int
     text: str
+    id: str

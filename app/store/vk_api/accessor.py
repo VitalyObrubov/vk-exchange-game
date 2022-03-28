@@ -7,10 +7,11 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
 from datetime import datetime
 from app.base.base_accessor import BaseAccessor
+from app.base.decorators import errors_catching_async
 from app.store.vk_api.dataclasses import Update, Message, UpdateObject
 from app.store.vk_api.poller import Poller
 from app.game.models import User
-from app.store.vk_api.keyboard import START_KEY, RUN_KEY
+
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -52,6 +53,13 @@ class VkApiAccessor(BaseAccessor):
         url += "&".join([f"{k}={v}" for k, v in params.items()])
         return url
 
+    def make_dict(self, pld):
+        res = {"command":"None"}
+        if isinstance(pld, str):
+            res = json.loads(pld)
+
+        return res
+
     async def _get_long_poll_service(self):
         async with self.session.get(
             self._build_query(
@@ -70,6 +78,7 @@ class VkApiAccessor(BaseAccessor):
             self.ts = data["ts"]
             self.logger.info(self.server)
 
+    @errors_catching_async
     async def poll(self):
         async with self.session.get(
             self._build_query(
@@ -89,33 +98,38 @@ class VkApiAccessor(BaseAccessor):
             raw_updates = data.get("updates", [])
             updates = []
             for update in raw_updates:
-                action = update["object"]["message"].get("action")#в сообщении о добавлении в беседу есть это поле
-                if action:
-                    action = action["type"]
-                updates.append(
-                    Update(
+                if update["type"] == "message_new":    
+                    update_ = Update(
                         type=update["type"],
                         object=UpdateObject(
                             id=update["object"]["message"]["id"],
                             user_id=update["object"]["message"]["from_id"],
                             peer_id=update["object"]["message"]["peer_id"],
-                            text=update["object"]["message"]["text"],
-                            action=action,
-                            payload = update["object"]["message"].get('payload')
-                            
+                            text=update["object"]["message"]["text"],                            
+                            payload = self.make_dict(update["object"]["message"].get('payload')),
+                            mess_id = ""
                         ),
                     )
-                )
-            return updates
-            #await self.app.store.bots_manager.handle_updates(updates)
+                elif update["type"] == "message_event":  
+                    update_ = Update(
+                        type=update["type"],
+                        object=UpdateObject(
+                            id=update["object"]["event_id"],
+                            user_id=update["object"]["user_id"],
+                            peer_id=update["object"]["peer_id"],
+                            text="",                            
+                            payload = update["object"]["payload"],
+                            mess_id = update["object"].get("conversation_message_id")
+                        ),
+                    )
 
-    async def send_message(self, message: Message) -> None:
-        game = self.app.games.get(message.peer_id)
-        if game == None:
-            knobs =  START_KEY
-        else:
-            knobs =  RUN_KEY
-        keyboard = json.dumps(knobs, ensure_ascii=False).encode('utf-8')
+                updates.append(update_)       
+            return updates
+  
+
+    async def send_message(self, message: Message, kbd) -> None:
+
+        keyboard = json.dumps(kbd, ensure_ascii=False).encode('utf-8')
         keyboard = str(keyboard.decode('utf-8'))
         async with self.session.get(
             self._build_query(
@@ -127,6 +141,42 @@ class VkApiAccessor(BaseAccessor):
                     "message": message.text,
                     "access_token": self.app.config.bot.token,
                     "keyboard": keyboard,
+                },
+            )
+        ) as resp:
+            data = await resp.json()
+            self.logger.info(data)
+
+    async def edit_message(self, message: Message, kbd) -> None:
+
+        keyboard = json.dumps(kbd, ensure_ascii=False).encode('utf-8')
+        keyboard = str(keyboard.decode('utf-8'))
+        async with self.session.get(
+            self._build_query(
+                API_PATH,
+                "messages.edit",
+                params={
+                    "conversation_message_id":message.id,
+                    "peer_id":message.peer_id,
+                    "message": message.text,
+                    "access_token": self.app.config.bot.token,
+                    "keyboard": keyboard,
+                },
+            )
+        ) as resp:
+            data = await resp.json()
+            self.logger.info(data)
+    async def send_answer(self, update: Update) -> None:
+        async with self.session.get(
+            self._build_query(
+                API_PATH,
+                "messages.sendMessageEventAnswer",
+                params={
+                    "access_token": self.app.config.bot.token,
+                    "event_id": update.object.id,
+                    "peer_id":update.object.peer_id,
+                    "user_id": update.object.user_id,
+                    #"event_data": evdata,
                 },
             )
         ) as resp:

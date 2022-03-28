@@ -43,7 +43,7 @@ class GameAccessor(BaseAccessor):
         await self.restore_games_on_startup()
 
     async def create_traded_sequrites(self, game: Game):
-        res = await SecuritesModel.query.gino.all()
+        res = await SecuritesModel.query.limit(6).gino.all()
         for row in res:
             t_secur = Security(id=row.id, description=row.description, price=row.start_price, market_event="")
             game.traded_sequrites[t_secur.id] = t_secur

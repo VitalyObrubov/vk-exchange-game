@@ -5,6 +5,7 @@ from app.web.app import app
 from app.store import Store
 from app.base.decorators import errors_catching_async
 from app.store.vk_api.dataclasses import Message
+from app.store.vk_api.keyboard import START_KEY
 
 class Poller:
     def __init__(self, store: Store):
@@ -36,7 +37,9 @@ class Poller:
                         user_id=111111,
                         peer_id=game.chat_id,
                         text=message_text,
-                    )
+                        id=""
+                    ),
+                    START_KEY
                 )
 
 

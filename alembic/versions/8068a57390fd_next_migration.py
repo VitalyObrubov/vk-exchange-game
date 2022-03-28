@@ -120,7 +120,8 @@ def upgrade():
             {'id':'ACKO', 'description':'АСКО-СТРАХОВАНИЕ','start_price':200},                    
             {'id':'AFLT', 'description':'Аэрофлот','start_price':200},
             {'id':'AKRN', 'description':'Акрон','start_price':500},
-            {'id':'AMEZ', 'description':'Ашинский металлургический завод','start_price':1000},
+            {'id':'AMEZ', 'description':'Ашинский металлургический завод','start_price':700},
+            {'id':'SBRF', 'description':'Сбербанк','start_price':300},
         ]
     )
 

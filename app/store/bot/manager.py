@@ -2,6 +2,8 @@ import typing
 from logging import getLogger
 from app.game.messages import *
 from app.store.vk_api.dataclasses import Update, Message
+from app.store.vk_api.keyboard import START_KEY, RUN_KEY
+from app.store.vk_api.keyboard import kbd_buy, kbd_buy_ammount, kbd_sell, kbd_sell_ammount
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -65,54 +67,116 @@ class BotManager:
     async def handle_updates(self, updates: list[Update]):
         for update in updates:
             chat_id=int(update.object.peer_id)
-            if update.object.payload == None:
-                update.object.payload = ""
-            if update.object.action == "chat_invite_user":
-                message_text = INVITE_MEESGE
+            game = self.app.games.get(chat_id)
+            if  game == None:
+                knobs =  START_KEY
+            else:
+                knobs =  RUN_KEY
 
-            elif update.object.text.startswith("/start_game") or update.object.payload.find("/start_game") > -1:
-
+            if update.object.text.startswith("/start_game") or update.object.payload["command"]=="/start_game":
                 users = await self.app.store.vk_api.get_users(chat_id) 
                 message_text = await self.app.store.games.start_game(chat_id, users)
+                knobs =  RUN_KEY
  
-            elif update.object.text.startswith("/help") or update.object.payload.find("/help") > -1:
-                message_text = self.app.store.games.get_help(chat_id)            
+            elif update.object.text.startswith("/help") or update.object.payload["command"]=="/help":
+                message_text = self.app.store.games.get_help(chat_id) 
+                knobs =  RUN_KEY           
             
-            elif update.object.text.startswith("/buy") or update.object.payload.find("/buy") > -1:
-                params = self.split_mess(chat_id, update.object.user_id, update.object.text)
-                if type(params) != dict:
-                    message_text = params
+            elif update.object.text.startswith("/buy") or update.object.payload["command"]=="/buy":
+                if update.type == "message_new":
+                    params = self.split_mess(chat_id, update.object.user_id, update.object.text)
+                    if type(params) != dict:
+                        message_text = params
+                    else:
+                        message_text = await self.app.store.games.buy_securyties(params)
                 else:
-                    message_text = await self.app.store.games.buy_securyties(params)            
+                    secur_id = update.object.payload.get("secur")
+                    ammount = update.object.payload.get("ammount")
+                    if secur_id == None:
+                        message_text = f"{game.users[update.object.user_id].name} покупает" 
+                        knobs = kbd_buy(game.traded_sequrites)
+                    else:
+                        if ammount == None:
+                            message_text = f"{game.users[update.object.user_id].name} покупает {secur_id} в количестве"
+                            knobs = kbd_buy_ammount(secur_id)
+                        else:
+                            params = self.split_mess(chat_id, update.object.user_id, f"/buy {secur_id} {ammount}")
+                            if type(params) != dict:
+                                message_text = params
+                            else:
+                                message_text = f"{game.users[update.object.user_id].name} покупает {secur_id} в количестве {ammount}<br>"
+                                message_text += await self.app.store.games.buy_securyties(params)                            
+                                knobs =  []
             
-            elif update.object.text.startswith("/sell") or update.object.payload.find("/sell") > -1:
-                params = self.split_mess(chat_id,  update.object.user_id, update.object.text)
-                if type(params) != dict:
-                    message_text = params
+            elif update.object.text.startswith("/sell") or update.object.payload["command"]=="/sell":
+                if update.type == "message_new":
+                    params = self.split_mess(chat_id,  update.object.user_id, update.object.text)
+                    if type(params) != dict:
+                        message_text = params
+                    else:
+                        message_text =  await self.app.store.games.sell_securyties(params)            
                 else:
-                    message_text =  await self.app.store.games.sell_securyties(params)            
+                    secur_id = update.object.payload.get("secur")
+                    ammount = update.object.payload.get("ammount")
+                    if secur_id == None:
+                        message_text = f"{game.users[update.object.user_id].name} продает" 
+                        knobs = kbd_sell(game.traded_sequrites)
+                    else:
+                        if ammount == None:
+                            message_text = f"{game.users[update.object.user_id].name} продает {secur_id} в количестве"
+                            knobs = kbd_sell_ammount(secur_id)
+                        else:
+                            params = self.split_mess(chat_id, update.object.user_id, f"/sell {secur_id} {ammount}")
+                            if type(params) != dict:
+                                message_text = params
+                            else:
+                                message_text = f"{game.users[update.object.user_id].name} продает {secur_id} в количестве {ammount}<br>"
+                                message_text += await self.app.store.games.sell_securyties(params)                            
+                                knobs =  []
             
-            elif update.object.text.startswith("/finish") or update.object.payload.find("/finish") > -1:
+            elif update.object.text.startswith("/finish") or update.object.payload["command"]=="/finish":
                 params = self.split_mess(chat_id,  update.object.user_id, "/finish")
                 if type(params) != dict:
                     message_text = params
                 else:
                     message_text =  await self.app.store.games.finish_round_for_user(params)                      
+                knobs =  RUN_KEY
 
-            elif update.object.text.startswith("/info") or update.object.payload.find("/info") > -1:
-                message_text = self.app.store.games.get_info(chat_id)            
+            elif update.object.text.startswith("/info") or update.object.payload["command"]=="/info":
+                message_text = self.app.store.games.get_info(chat_id) 
+                knobs =  RUN_KEY           
            
-            elif update.object.text.startswith("/stop_game") or update.object.payload.find("/stop_game") > -1:
-                message_text = await self.app.store.games.stop_game(chat_id)            
+            elif update.object.text.startswith("/stop_game") or update.object.payload["command"]=="/stop_game":
+                message_text = await self.app.store.games.stop_game(chat_id) 
+                knobs =  START_KEY           
            
             else:
                 message_text = UNKNOWN_COMMAND
 
-            await self.app.store.vk_api.send_message(
-                Message(
-                    user_id=update.object.user_id,
-                    peer_id=update.object.peer_id,
-                    text=message_text,
+            if update.type == "message_event":
+                await self.app.store.vk_api.send_answer(update)
+            
+
+            if ((update.object.payload["command"]=="/buy" or update.object.payload["command"]=="/sell") 
+                and (update.object.payload.get("secur") != None)):
+
+                await self.app.store.vk_api.edit_message(
+                    Message(
+                        user_id=update.object.user_id,
+                        peer_id=update.object.peer_id,
+                        text=message_text,
+                        id=update.object.mess_id
+                        ),
+                    knobs
+                )            
+            else:
+                await self.app.store.vk_api.send_message(
+                    Message(
+                        user_id=update.object.user_id,
+                        peer_id=update.object.peer_id,
+                        text=message_text,
+                        id=""
+                        ),
+                    knobs
                 )
-            )
         return "Успешно"
