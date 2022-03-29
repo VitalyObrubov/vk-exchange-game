@@ -14,3 +14,4 @@ RUN chmod +x run.sh
 # запускаем скрипт
 EXPOSE 8080
 CMD ["python", "./main.py"]
+#CMD ["./run.sh"]
