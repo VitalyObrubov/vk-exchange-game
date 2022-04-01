@@ -5,11 +5,10 @@ admin:
   email: admin@admin.com
   password: admin
 database:
-  #host: 193.29.56.83
-  host: 193.29.56.83
+  host: 
   port: 5432
-  user: exchange_user
-  password: exchange_user_password
+  user: 
+  password: 
   database: exchange
 bot:
 
