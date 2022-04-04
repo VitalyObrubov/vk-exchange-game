@@ -92,11 +92,18 @@ class AdminDelView(View):
     async def post(self):
         data = await self.request.json()
         email = data.get('email')
+<<<<<<< HEAD
 
         if email != "admin@admin.com":
             await AdminModel.delete.where(AdminModel.email == email).gino.status()
         else:
             msg = "Этого админа удалять нельзя"        
+=======
+        if email != "admin@admin.com":
+            await AdminModel.delete.where(AdminModel.email == email).gino.status()
+        else:
+            msg = "Этого админа удалять нельзя"          
+>>>>>>> Deploy
         return web.Response(status=302, headers={'location': '/admins'})
 
 

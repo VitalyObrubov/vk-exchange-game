@@ -93,6 +93,12 @@ class VkApiAccessor(BaseAccessor):
             )
         ) as resp:
             data = await resp.json()
+            if data.get("failed") in [2,3]:
+                try:
+                    await self._get_long_poll_service()
+                except Exception as e:
+                    self.logger.error("Exception", exc_info=e)
+                return []                
             self.logger.info(data)
             self.ts = data["ts"]
             raw_updates = data.get("updates", [])
