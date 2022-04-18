@@ -73,16 +73,18 @@ class BotManager:
             else:
                 knobs =  RUN_KEY
 
-            if update.object.text.startswith("/start_game") or update.object.payload["command"]=="/start_game":
+            if ("/start_game" in update.object.text) or (update.object.payload["command"]=="/start_game"):
                 users = await self.app.store.vk_api.get_users(chat_id) 
                 message_text = await self.app.store.games.start_game(chat_id, users)
-                knobs =  RUN_KEY
+                if len(users) == 0:
+                    knobs =  START_KEY
+                else:
+                    knobs =  RUN_KEY
  
-            elif update.object.text.startswith("/help") or update.object.payload["command"]=="/help":
-                message_text = self.app.store.games.get_help(chat_id) 
-                knobs =  RUN_KEY           
+            elif ("/help" in update.object.text) or update.object.payload["command"]=="/help":
+                message_text = self.app.store.games.get_help(chat_id)         
             
-            elif update.object.text.startswith("/buy") or update.object.payload["command"]=="/buy":
+            elif ("/buy" in update.object.text) or update.object.payload["command"]=="/buy":
                 if update.type == "message_new":
                     params = self.split_mess(chat_id, update.object.user_id, update.object.text)
                     if type(params) != dict:
@@ -108,7 +110,7 @@ class BotManager:
                                 message_text += await self.app.store.games.buy_securyties(params)                            
                                 knobs =  []
             
-            elif update.object.text.startswith("/sell") or update.object.payload["command"]=="/sell":
+            elif ("/sell" in update.object.text) or update.object.payload["command"]=="/sell":
                 if update.type == "message_new":
                     params = self.split_mess(chat_id,  update.object.user_id, update.object.text)
                     if type(params) != dict:
@@ -134,19 +136,17 @@ class BotManager:
                                 message_text += await self.app.store.games.sell_securyties(params)                            
                                 knobs =  []
             
-            elif update.object.text.startswith("/finish") or update.object.payload["command"]=="/finish":
+            elif  ("/finish" in update.object.text) or update.object.payload["command"]=="/finish":
                 params = self.split_mess(chat_id,  update.object.user_id, "/finish")
                 if type(params) != dict:
                     message_text = params
                 else:
                     message_text =  await self.app.store.games.finish_round_for_user(params)                      
-                knobs =  RUN_KEY
 
-            elif update.object.text.startswith("/info") or update.object.payload["command"]=="/info":
-                message_text = self.app.store.games.get_info(chat_id) 
-                knobs =  RUN_KEY           
+            elif  ("/info" in update.object.text) or update.object.payload["command"]=="/info":
+                message_text = self.app.store.games.get_info(chat_id)          
            
-            elif update.object.text.startswith("/stop_game") or update.object.payload["command"]=="/stop_game":
+            elif  ("/stop_game" in update.object.text) or update.object.payload["command"]=="/stop_game":
                 message_text = await self.app.store.games.stop_game(chat_id) 
                 knobs =  START_KEY           
            

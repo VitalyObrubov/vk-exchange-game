@@ -13,7 +13,7 @@ START_KEY = {
       {
         "action": {
           "type": "callback",
-          "label": "Помошь",
+          "label": "Помощь",
           "payload": {"command":"/help"}
         },
         "color": "primary"
@@ -55,7 +55,7 @@ RUN_KEY = {
       {
         "action": {
           "type": "callback",
-          "label": "Помошь",
+          "label": "Помощь",
           "payload": {'command':'/help'}
         },
         "color": "primary"
